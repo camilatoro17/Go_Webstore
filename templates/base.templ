@@ -1,0 +1,22 @@
+package templates
+
+templ Base(content templ.Component) {
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<title>Maybe this comes from a parameter to your `Base` template?</title>
+		<link rel="stylesheet" href="assets/styles/styles.css">
+	</head>
+	<body>
+		@header()
+		@content
+		@footer()
+	</body>
+	</html>
+}
+
+templ header() {
+	<header>
+		<h1>Your Header Here</h1>
+	</header>
+}
