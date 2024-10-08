@@ -88,7 +88,7 @@ func PurchaseConfirmation(purchaseInformation types.PurchaseInfo) templ.Componen
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", purchaseInformation.Total))
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", purchaseInformation.total))
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 22, Col: 101}
 		}

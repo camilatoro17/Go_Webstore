@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/a-h/templ"
 	"github.com/labstack/echo/v4"
@@ -36,10 +37,61 @@ func main() {
 	// TODO: Handle the form submission and return the purchase confirmation view
 	e.POST("/purchase", func(ctx echo.Context) error {
 		// TODO: Grab the form details from ctx.FormValue("...")
-		purchaseInfo := types.PurchaseInfo{
-			// TODO: Maybe use this structure to pass the data to your purchase confirmation page
-			// ...
+
+		products := map[string]float64{
+			"2024 G80 M3": 78000,
+			"2024 S63 AMG": 183000,
+			"2024 Audi RS7": 128000,
 		}
+
+		fname := ctx.FormValue("fname")
+		lname := ctx.FormValue("lname")
+		email := ctx.FormValue("email")
+		car := ctx.FormValue("car")
+		quantitystr := ctx.FormValue("quantity")
+		roundup := ctx.FormValue("donation")
+
+		// Convert quantity from str to int
+		quantity, err := strconv.Atoi(quantitystr)
+    	if err != nil {
+        	return ctx.String(http.StatusBadRequest, "Invalid quantity")
+    	}
+
+		var price float64
+		var grandtotal float64
+
+		price, exists := products[car]
+    	if !exists {
+        	return ctx.String(http.StatusBadRequest, "Car not found")
+    	}
+
+		// Multiply price by the quantity
+		price2 := price * float64(quantity)
+
+		const rate = 0.029
+		tax := price2 * rate
+		totall2 := price2 + tax
+
+		if (roundup == "yes"){
+			grandtotal = float64(int(totall2+0.99))
+		}
+		else {
+			grandtotal = totall2
+		}
+
+		// TODO: Maybe use this structure to pass the data to your purchase confirmation page
+		// ...
+		purchaseInfo := types.PurchaseInfo{
+			FirstName: fname,
+			LastName: lname,
+			Email: email,
+			Car: car,
+			Quantity: quantity,
+			Price: totalPrice,
+			Total: totalPrice,
+			RoundUpTotal: grandtotal,
+		}
+
 		return Render(ctx, http.StatusOK, templates.Base(templates.PurchaseConfirmation(purchaseInfo)))
 	})
 

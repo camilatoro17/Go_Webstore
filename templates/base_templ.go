@@ -29,7 +29,7 @@ func Base(content templ.Component) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<!doctype html><html><head><title>Maybe this comes from a parameter to your `Base` template?</title><link rel=\"stylesheet\" href=\"assets/styles/styles.css\"></head><body>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<!doctype html><html><head><title>Car Dealership</title><link rel=\"stylesheet\" href=\"assets/styles/styles.css\"></head><body>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -37,7 +37,7 @@ func Base(content templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<form action=\"/action_page.php\" method=\"POST\"><fieldset><legend>Personal Information</legend> <label for=\"fname\">First Name * :</label> <input type=\"text\" id=\"firstname\" name=\"fname\" required><br><label for=\"lname\">Last Name * :</label> <input type=\"text\" id=\"lastname\" name=\"lname\" required><br><label for=\"email\">Email * :</label> <input type=\"text\" id=\"email\" name=\"email\" required><br></fieldset><fieldset><legend>Product Information</legend> <label for=\"car\">Available Cars:</label> <select id=\"car\" name=\"car\"><option value=\"\">Select a car</option> <option value=\"car1\">2024 G80 M3 - $78,000</option> <option value=\"car2\">2024 S63 AMG - $183,000</option> <option value=\"car3\">2024 Audi RS7 - $128,000</option></select> <label for=\"quantity\">Quantity:</label> <input type=\"number\" id=\"quantity\" name=\"quantity\" min=\"1\"><br></fieldset><div id=\"carpic\"></div><fieldset><legend>Round Up For A Donation</legend> <input type=\"radio\" id=\"yesdonate\" name=\"donate\" value=\"yes\"> <label for=\"yesdonate\">Yes</label><br><input type=\"radio\" id=\"nodonate\" name=\"donate\" value=\"no\" checked> <label for=\"nodonate\">No</label></fieldset><button type=\"submit\">Purchase</button></form>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div class=\"container\"><form action=\"/purchase\" method=\"POST\"><fieldset><legend>Personal Information</legend> <label for=\"fname\">First Name:</label><br><input type=\"text\" id=\"fname\" name=\"fname\" pattern=\"[A-Za-z\\s&#39;]+\" required><br><label for=\"lname\">Last Name:</label> <input type=\"text\" id=\"lname\" name=\"lname\" pattern=\"[A-Za-z\\s&#39;]+\" required><br><label for=\"email\">Email:</label> <input type=\"email\" id=\"email\" name=\"email\" required><br></fieldset><fieldset><legend>Product Information</legend> <label for=\"car\">Available Cars:</label><br><select id=\"car\" name=\"car\" required><option value=\"\" disabled selected>Select a car</option> <option value=\"car1\" data-image=\"m3.png\">2024 G80 M3 - $78,000</option> <option value=\"car2\" data-image=\"s63.png\">2024 S63 AMG - $183,000</option> <option value=\"car3\" data-image=\"rs7.png\">2024 Audi RS7 - $128,000</option></select><br><label for=\"quantity\">Quantity:</label> <input type=\"number\" id=\"quantity\" name=\"quantity\" min=\"1\" max=\"100\" value=\"1\" required><br></fieldset><fieldset><legend>Round Up For A Donation</legend> <label><input type=\"radio\" id=\"yesdonate\" name=\"donate\" value=\"yes\" checked> Yes</label><br><label><input type=\"radio\" id=\"nodonate\" name=\"donate\" value=\"no\"> No</label></fieldset><button type=\"submit\">Purchase</button></form><div id=\"carpic\" style=\"display:none;\"><img id=\"carimg\" src=\"\" alt=\"Photo of Car\" style=\"max-width:300px;\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -45,7 +45,7 @@ func Base(content templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</body></html>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<script>\n\t\tdocument.getElementById('car').addEventListener('change', function() {\n\t\t\tvar selected = this.options[this.selectedIndex];\n\t\t\tvar imgURL = selected.getAttribute('data-image');\n\t\t\tvar product = document.getElementById('carimg');\n\t\t\tvar imgContainer = document.getElementById('carpic')\n\n\t\t\tif (imgURL){\n\t\t\t\tproduct.src = 'assets/images/' + imgURL;\n\t\t\t\tproduct.alt = selected.text;\n\t\t\t\timgContainer.style.display = 'block';\n\t\t\t}\n\t\t\telse {\n\t\t\t\tproduct.src = '';\n\t\t\t\timgContainer.style.display = 'none';\n\t\t\t}\n\t\t});\n\t</script></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

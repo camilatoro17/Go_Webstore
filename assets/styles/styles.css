@@ -74,10 +74,16 @@ button:hover {
 }
 
 #carpic {
-    background-color: white;
+    background-color: transparent !important;
     height: 200px;
     margin-bottom: 20px;
     text-align: center;
+}
+
+#carimg {
+    max-width: 100%; 
+    width: 300px;
+    height: auto;
 }
 
 footer {
@@ -113,3 +119,7 @@ button {
     color: #ffffff;
 }
 
+
+.container:empty {
+    display: none;
+}
