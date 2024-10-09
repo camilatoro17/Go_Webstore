@@ -13,6 +13,12 @@ import (
 	"go-store/types"
 )
 
+var products = map[string]float64{
+	"2024 G80 M3":   78000,
+	"2024 S63 AMG":  183000,
+	"2024 Audi RS7": 128000,
+}
+
 func main() {
 	// TODO: Fill in your products here with name -> price as the key -> value pair.
 	// products := map[string]float64{
@@ -26,69 +32,59 @@ func main() {
 
 	// TODO: Render your base store page here
 	e.GET("/store", func(ctx echo.Context) error {
-		return Render(ctx, http.StatusOK, templates.Base(templates.Store(map[string]float64{
-			"2024 G80 M3": 78000,
-			"2024 S63 AMG": 183000,
-			"2024 Audi RS7": 128000,
-
-		})))
+		return Render(ctx, http.StatusOK, templates.Base(templates.Store(products)))
 	})
 
 	// TODO: Handle the form submission and return the purchase confirmation view
 	e.POST("/purchase", func(ctx echo.Context) error {
 		// TODO: Grab the form details from ctx.FormValue("...")
 
-		products := map[string]float64{
-			"2024 G80 M3": 78000,
-			"2024 S63 AMG": 183000,
-			"2024 Audi RS7": 128000,
-		}
-
 		fname := ctx.FormValue("fname")
 		lname := ctx.FormValue("lname")
 		email := ctx.FormValue("email")
 		car := ctx.FormValue("car")
 		quantitystr := ctx.FormValue("quantity")
-		roundup := ctx.FormValue("donation")
+		roundup := ctx.FormValue("donate")
+
+		price, exists := products[car]
+		if !exists {
+			return ctx.String(http.StatusBadRequest, "Car not found")
+		}
 
 		// Convert quantity from str to int
 		quantity, err := strconv.Atoi(quantitystr)
-    	if err != nil {
-        	return ctx.String(http.StatusBadRequest, "Invalid quantity")
-    	}
-
-		var price float64
-		var grandtotal float64
-
-		price, exists := products[car]
-    	if !exists {
-        	return ctx.String(http.StatusBadRequest, "Car not found")
-    	}
-
-		// Multiply price by the quantity
-		price2 := price * float64(quantity)
-
-		const rate = 0.029
-		tax := price2 * rate
-		totall2 := price2 + tax
-
-		if (roundup == "yes"){
-			grandtotal = float64(int(totall2+0.99))
+		if err != nil {
+			return ctx.String(http.StatusBadRequest, "Invalid quantity")
 		}
-		else {
-			grandtotal = totall2
+
+		// Calculate subtotal (price * quantity)
+		subtotal := price * float64(quantity)
+
+		// Calculate tax (2.9%)
+		const taxRate = 0.029
+		tax := subtotal * taxRate
+
+		// Calculate total including tax
+		totalWithTax := subtotal + tax
+
+		// Check if user opted to round up
+		var grandtotal float64
+		if roundup == "yes" {
+			grandtotal = totalWithTax + 1.00 // Round up
+		} else {
+			grandtotal = totalWithTax
 		}
 
 		// TODO: Maybe use this structure to pass the data to your purchase confirmation page
 		// ...
 		purchaseInfo := types.PurchaseInfo{
-			FirstName: fname,
-			LastName: lname,
-			Email: email,
-			Car: car,
-			Quantity: quantity,
-			Price: totalPrice,
-			Total: totalPrice,
+			FirstName:    fname,
+			LastName:     lname,
+			Email:        email,
+			Car:          car,
+			Quantity:     quantity,
+			Price:        price,
+			Total:        totalWithTax,
 			RoundUpTotal: grandtotal,
 		}
 

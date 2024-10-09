@@ -6,19 +6,68 @@ import (
 )
 
 templ Store(products map[string]float64) {
-	<p>Your store markup goes here</p>
-	for product, price := range products {
-		<p>
-			You can loop over your products here, like so and print them out as such: { fmt.Sprintf("%s - %.2f", product,
-			price) }
-		</p>
-	}
+	<div class="container">
+			<form action="/purchase" method="POST">
+
+        <fieldset>
+            <legend>Personal Information</legend>
+
+            <label for="fname">First Name:</label><br>
+            <input type="text" id="fname" name="fname" pattern="[A-Za-z\s']+" required><br>
+
+            <label for="lname">Last Name:</label>
+            <input type="text" id="lname" name="lname" pattern="[A-Za-z\s']+" required><br>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required><br>
+        </fieldset>
+
+        <fieldset>
+            <legend>Product Information</legend>
+
+            <label for="car">Available Cars:</label><br>
+            <select id="car" name="car" required>
+                <option value="" disabled selected>Select a car</option>
+				for car, price := range products {
+                	<option value={car} data-image={car}>{ fmt.Sprintf("%s : %.2f", car, price) }</option>
+				}
+            </select><br>
+
+            <label for="quantity">Quantity:</label>
+            <input type="number" id="quantity" name="quantity" min="1" max="100" value="1" required><br>
+
+        </fieldset>
+
+        <fieldset>
+            <legend>Round Up For A Donation</legend>
+
+			<label>
+			<input type="radio" id="yesdonate" name="donate" value="yes" checked> Yes
+			</label><br>
+            
+			<label>
+			<input type="radio" id="nodonate" name="donate" value="no"> No
+			</label>
+
+        </fieldset>
+
+		<button type="submit">Purchase</button>
+
+		</form>
+
+		<div id="carpic" style="display:none;">
+			<img id="carimg" src="" alt="Photo of Car" style="max-width:300px;"></img>
+		</div>
+	
+	</div>
 }
 
 templ PurchaseConfirmation(purchaseInformation types.PurchaseInfo) {
 <div>
-	<p>Your purchase confirmation markup would go here</p>
-	<p>You may access things from the <pre>types.PurchaseInfo</pre></p>
-	<p>It might look something like this: your total is { fmt.Sprintf("%.2f", purchaseInformation.total) }</p>
+	<p>Thank you for your order, { purchaseInformation.FirstName } { purchaseInformation.LastName }</p>
+	<p>You have selected { fmt.Sprintf("%d", purchaseInformation.Quantity) } { purchaseInformation.Car } at { fmt.Sprintf("%.2f", purchaseInformation.Price) }</p>
+	<p>Subtotal: { fmt.Sprintf("%.2f", purchaseInformation.Price * float64(purchaseInformation.Quantity)) }</p>
+	<p>Total including tax (2.9%): { fmt.Sprintf("%.2f", purchaseInformation.Total) }</p>
+	<p>Total with donation: { fmt.Sprintf("%.2f", purchaseInformation.RoundUpTotal) }</p>
 </div>
 }

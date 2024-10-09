@@ -9,64 +9,7 @@ templ Base(content templ.Component) {
 	</head>
 	<body>
 		@header()
-
-		<div class="container">
-			<form action="/purchase" method="POST">
-
-        <fieldset>
-            <legend>Personal Information</legend>
-
-            <label for="fname">First Name:</label><br>
-            <input type="text" id="fname" name="fname" pattern="[A-Za-z\s']+" required><br>
-
-            <label for="lname">Last Name:</label>
-            <input type="text" id="lname" name="lname" pattern="[A-Za-z\s']+" required><br>
-
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required><br>
-        </fieldset>
-
-        <fieldset>
-            <legend>Product Information</legend>
-
-            <label for="car">Available Cars:</label><br>
-            <select id="car" name="car" required>
-                <option value="" disabled selected>Select a car</option>
-                <option value="car1" data-image="m3.png">2024 G80 M3 - $78,000</option>
-                <option value="car2" data-image="s63.png">2024 S63 AMG - $183,000</option>
-                <option value="car3" data-image="rs7.png">2024 Audi RS7 - $128,000</option>
-            </select><br>
-
-            <label for="quantity">Quantity:</label>
-            <input type="number" id="quantity" name="quantity" min="1" max="100" value="1" required><br>
-
-        </fieldset>
-
-        <fieldset>
-            <legend>Round Up For A Donation</legend>
-
-			<label>
-			<input type="radio" id="yesdonate" name="donate" value="yes" checked> Yes
-			</label><br>
-            
-			<label>
-			<input type="radio" id="nodonate" name="donate" value="no"> No
-			</label>
-
-        </fieldset>
-
-		<button type="submit">Purchase</button>
-
-		</form>
-
-		<div id="carpic" style="display:none;">
-			<img id="carimg" src="" alt="Photo of Car" style="max-width:300px;"></img>
-		</div>
-	
-	</div>
-
-
-
+		@content
 	
 	@footer()
 
@@ -78,7 +21,7 @@ templ Base(content templ.Component) {
 			var imgContainer = document.getElementById('carpic')
 
 			if (imgURL){
-				product.src = 'assets/images/' + imgURL;
+				product.src = 'assets/images/' + imgURL + ".png";
 				product.alt = selected.text;
 				imgContainer.style.display = 'block';
 			}
