@@ -26,26 +26,26 @@ var products = map[string]float64{
 }
 
 type Product struct {
-    ID       int64
-    Name     string
-    Image    string
-    Price    float64
-    InStock  int
+	ID      int64
+	Name    string
+	Image   string
+	Price   float64
+	InStock int
 }
 
 type Customer struct {
-    ID       int64
-    FirstName string
-    LastName  string
-    Email     string
+	ID        int64
+	FirstName string
+	LastName  string
+	Email     string
 }
 
 type Order struct {
-    ID         int64
-    ProductID  int
-    CustomerID int
-    Quantity   int
-    Price      float64
+	ID         int64
+	ProductID  int
+	CustomerID int
+	Quantity   int
+	Price      float64
 }
 
 var db *sql.DB
@@ -170,9 +170,9 @@ func main() {
 
 		//add an order
 		orderID, err := addOrder(Order{
-			ProductID:  1,  
-			CustomerID: 1, 
-			Quantity:   2, 
+			ProductID:  1,
+			CustomerID: 1,
+			Quantity:   2,
 			Price:      183000,
 		})
 		if err != nil {
@@ -187,102 +187,101 @@ func main() {
 }
 
 func addOrder(ord Order) (int64, error) {
-    result, err := db.Exec("INSERT INTO orders (product_id, customer_id, quantity, price) VALUES (?, ?, ?, ?)",
-        ord.ProductID, ord.CustomerID, ord.Quantity, ord.Price)
-    if err != nil {
-        return 0, fmt.Errorf("addOrder: %v", err)
-    }
+	result, err := db.Exec("INSERT INTO orders (product_id, customer_id, quantity, price) VALUES (?, ?, ?, ?)",
+		ord.ProductID, ord.CustomerID, ord.Quantity, ord.Price)
+	if err != nil {
+		return 0, fmt.Errorf("addOrder: %v", err)
+	}
 
-    id, err := result.LastInsertId()
-    if err != nil {
-        return 0, fmt.Errorf("addOrder: %v", err)
-    }
-    return id, nil
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("addOrder: %v", err)
+	}
+	return id, nil
 }
 
-
 func productByName(name string) ([]Product, error) {
-    var products []Product
-    rows, err := db.Query("SELECT * FROM product WHERE product_name = ?", name)
-    if err != nil {
-        return nil, fmt.Errorf("productByName %q: %v", name, err)
-    }
-    defer rows.Close()
+	var products []Product
+	rows, err := db.Query("SELECT * FROM product WHERE product_name = ?", name)
+	if err != nil {
+		return nil, fmt.Errorf("productByName %q: %v", name, err)
+	}
+	defer rows.Close()
 
-    for rows.Next() {
-        var p Product
-        if err := rows.Scan(&p.ID, &p.Name, &p.Image, &p.Price, &p.InStock); err != nil {
-            return nil, fmt.Errorf("productByName %q: %v", name, err)
-        }
-        products = append(products, p)
-    }
+	for rows.Next() {
+		var p Product
+		if err := rows.Scan(&p.ID, &p.Name, &p.Image, &p.Price, &p.InStock); err != nil {
+			return nil, fmt.Errorf("productByName %q: %v", name, err)
+		}
+		products = append(products, p)
+	}
 
-    if err := rows.Err(); err != nil {
-        return nil, err
-    }
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
-    return products, nil
+	return products, nil
 }
 
 func productByID(id int64) (Product, error) {
-    var p Product
-    row := db.QueryRow("SELECT * FROM product WHERE id = ?", id)
-    
-    err := row.Scan(&p.ID, &p.Name, &p.Image, &p.Price, &p.InStock)
-    if err != nil {
-        if err == sql.ErrNoRows {
-            return p, fmt.Errorf("productByID %d: no such product", id)
-        }
-        return p, fmt.Errorf("productByID %d: %v", id, err)
-    }
+	var p Product
+	row := db.QueryRow("SELECT * FROM product WHERE id = ?", id)
 
-    return p, nil
+	err := row.Scan(&p.ID, &p.Name, &p.Image, &p.Price, &p.InStock)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return p, fmt.Errorf("productByID %d: no such product", id)
+		}
+		return p, fmt.Errorf("productByID %d: %v", id, err)
+	}
+
+	return p, nil
 }
 
 func customerByLastName(lastName string) ([]Customer, error) {
-    var customers []Customer
-    rows, err := db.Query("SELECT * FROM customer WHERE last_name = ?", lastName)
-    if err != nil {
-        return nil, fmt.Errorf("customerByLastName %q: %v", lastName, err)
-    }
-    defer rows.Close()
+	var customers []Customer
+	rows, err := db.Query("SELECT * FROM customer WHERE last_name = ?", lastName)
+	if err != nil {
+		return nil, fmt.Errorf("customerByLastName %q: %v", lastName, err)
+	}
+	defer rows.Close()
 
-    for rows.Next() {
-        var c Customer
-        if err := rows.Scan(&c.ID, &c.FirstName, &c.LastName, &c.Email); err != nil {
-            return nil, fmt.Errorf("customerByLastName %q: %v", lastName, err)
-        }
-        customers = append(customers, c)
-    }
+	for rows.Next() {
+		var c Customer
+		if err := rows.Scan(&c.ID, &c.FirstName, &c.LastName, &c.Email); err != nil {
+			return nil, fmt.Errorf("customerByLastName %q: %v", lastName, err)
+		}
+		customers = append(customers, c)
+	}
 
-    if err := rows.Err(); err != nil {
-        return nil, err
-    }
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
-    return customers, nil
+	return customers, nil
 }
 
 func ordersByCustomer(customerID int) ([]Order, error) {
-    var orders []Order
-    rows, err := db.Query("SELECT * FROM orders WHERE customer_id = ?", customerID)
-    if err != nil {
-        return nil, fmt.Errorf("ordersByCustomer %d: %v", customerID, err)
-    }
-    defer rows.Close()
+	var orders []Order
+	rows, err := db.Query("SELECT * FROM orders WHERE customer_id = ?", customerID)
+	if err != nil {
+		return nil, fmt.Errorf("ordersByCustomer %d: %v", customerID, err)
+	}
+	defer rows.Close()
 
-    for rows.Next() {
-        var o Order
-        if err := rows.Scan(&o.ID, &o.ProductID, &o.CustomerID, &o.Quantity, &o.Price); err != nil {
-            return nil, fmt.Errorf("ordersByCustomer %d: %v", customerID, err)
-        }
-        orders = append(orders, o)
-    }
+	for rows.Next() {
+		var o Order
+		if err := rows.Scan(&o.ID, &o.ProductID, &o.CustomerID, &o.Quantity, &o.Price); err != nil {
+			return nil, fmt.Errorf("ordersByCustomer %d: %v", customerID, err)
+		}
+		orders = append(orders, o)
+	}
 
-    if err := rows.Err(); err != nil {
-        return nil, err
-    }
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
-    return orders, nil
+	return orders, nil
 }
 
 // INFO: This is a simplified render method that replaces `echo`'s with a custom
