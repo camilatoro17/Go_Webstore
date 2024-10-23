@@ -26,7 +26,7 @@ CREATE TABLE orders (
     product_id int,
     customer_id int,
     quantity int,
-    price decimal(6,2),
+    price decimal(10,2),
     tax decimal(6,2),
     donation decimal(4,2),  -- Renamed from 'decimal' to 'donation'
     timestamp bigint,

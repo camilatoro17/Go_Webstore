@@ -19,9 +19,28 @@ type CustomerResults struct {
 	Customer1 Customer
 }
 
+type Product struct {
+	ID              int64
+	Name            string
+	Price           float64
+	QuantityInStock int
+	Image           string
+}
+
 type Customer struct {
-	ID        id
+	ID        int64
 	FirstName string
 	LastName  string
 	Email     string
+}
+
+type Order struct {
+	ID         int64
+	ProductID  int
+	CustomerID int
+	Quantity   int
+	Price      float64
+	Tax        float64
+	Donation   float64
+	Timestamp  int64
 }
