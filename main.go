@@ -23,6 +23,12 @@ var products = map[string]float64{
 	"2024 Audi RS7": 128000,
 }
 
+var productIDs = map[string]int{
+	"2024 G80 M3":   1,
+	"2024 S63 AMG":  2,
+	"2024 Audi RS7": 3,
+}
+
 var conn *sql.DB
 
 func main() {
@@ -58,10 +64,69 @@ func main() {
 		return Render(ctx, http.StatusOK, templates.Base(templates.Store(products)))
 	})
 
-	e.GET("/schema", func(ctx echo.Context) error {
+	e.GET("/dbQueries", func(ctx echo.Context) error {
+		// get all customers
+		customers, err := db.GetAllCustomers(conn)
+		if err != nil {
+			e.Logger.Errorf("%+v", err)
+			return ctx.String(http.StatusInternalServerError, "Error retrieving customers")
+		}
+
+		// output messages
+		outputmsg := ""
+
+		// customer by ID
+		customerByID, err := db.CustomerByID(conn, 2)
+		if err != nil {
+			outputmsg += fmt.Sprintf("Customer 2 by id... Error: %+v\n", err)
+		} else {
+			outputmsg += fmt.Sprintf("Customer 2 by id... %s\n", customerByID.Email)
+		}
+
+		// customer by ID - DNE
+		_, err = db.CustomerByID(conn, 3)
+		if err != nil {
+			outputmsg += "Customer 3? Customer 3 not found!\n"
+		}
+
+		// customer by email
+		customerByEmail, err := db.CustomerByEmail(conn, "mmouse@mines.edu")
+		if err != nil {
+			outputmsg += fmt.Sprintf("Customer by email: Error: %+v\n", err)
+		} else {
+			outputmsg += fmt.Sprintf("Customer by email: %s\n", customerByEmail.Email)
+		}
+
+		// customer DNE
+		randomEmail := "random@email.com"
+		_, err = db.CustomerByEmail(conn, randomEmail)
+		if err != nil {
+			outputmsg += fmt.Sprintf("Customer by email exists? Customer %s not found... adding...\n", randomEmail)
+
+			// Add the new customer
+			customerID, err := db.AddCustomer(conn, "Not", "Found", randomEmail)
+			if err != nil {
+				e.Logger.Errorf("Error adding customer: %+v", err)
+			} else {
+				outputmsg += fmt.Sprintf("Added customer with ID: %d\n", customerID)
+			}
+		}
+
+		// get all orders
+		orders, err := db.GetAllOrders(conn)
+		if err != nil {
+			e.Logger.Errorf("%+v", err)
+			return ctx.String(http.StatusInternalServerError, "Error retrieving orders")
+		}
+	
+		// get products
 		products, err := db.GetAllProducts(conn)
-		e.Logger.Errorf("%+v", err)
-		return Render(ctx, http.StatusOK, templates.Queries(products))
+		if err != nil {
+			e.Logger.Errorf("%+v", err)
+			return ctx.String(http.StatusInternalServerError, "Error retrieving products")
+		}
+
+		return Render(ctx, http.StatusOK, templates.Queries(customers, len(customers), orders, len(orders), products, outputmsg))
 	})
 
 	// TODO: Handle the form submission and return the purchase confirmation view
@@ -86,6 +151,18 @@ func main() {
 			return ctx.String(http.StatusBadRequest, "Invalid quantity")
 		}
 
+		// Update the product quantity after the sale
+		err = db.UpdateProductQuantity(conn, car, quantity)
+		if err != nil {
+			log.Printf("Error updating product quantity: %v", err)
+			return ctx.String(http.StatusInternalServerError, "Error updating product quantity")
+		}
+
+		products, err := db.ProductByName(conn, car)
+		if err != nil || len(products) == 0 {
+			return ctx.String(http.StatusBadRequest, "Product not found")
+		}
+
 		// Calculate subtotal (price * quantity)
 		subtotal := price * float64(quantity)
 
@@ -98,8 +175,11 @@ func main() {
 
 		// Check if user opted to round up
 		var grandtotal float64
+		var donation float64 = 0
+
 		if roundup == "yes" {
 			grandtotal = totalWithTax + 1.00 // Round up
+			donation = 1.00
 		} else {
 			grandtotal = totalWithTax
 		}
@@ -118,7 +198,7 @@ func main() {
 		}
 
 		//find products by the name
-		products, err := db.ProductByName(conn, "2024 G80 M3")
+		products, err = db.ProductByName(conn, "2024 G80 M3")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -131,13 +211,6 @@ func main() {
 		}
 		fmt.Printf("Customers found: %v\n", customers)
 
-		//find orders by customer id=1
-		orders, err := db.OrdersByCustomer(conn, 1)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("Orders found: %v\n", orders)
-
 		//find a product by its id=1
 		p, err := db.ProductByID(conn, 1)
 		if err != nil {
@@ -147,14 +220,19 @@ func main() {
 
 		//add an order
 		orderID, err := db.AddOrder(conn, types.Order{
-			ProductID:  1,
-			CustomerID: 1,
-			Quantity:   2,
-			Price:      183000,
+			CustomerFirstName: fname,
+			CustomerLastName:  lname,
+			ProductName:       car,
+			Quantity:          quantity,
+			Price:             grandtotal,
+			Tax:               tax,
+			Donation:          donation,
 		})
 		if err != nil {
-			log.Fatal(err)
+			log.Printf("Error adding order: %v", err)
+			return ctx.String(http.StatusInternalServerError, "Error adding order")
 		}
+
 		fmt.Printf("Order added with ID: %v\n", orderID)
 
 		return Render(ctx, http.StatusOK, templates.Base(templates.PurchaseConfirmation(purchaseInfo)))

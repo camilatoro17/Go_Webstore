@@ -5,21 +5,87 @@ import (
     "fmt"
 ) 
 
-templ Queries(products []types.Product) {
-    <table>
-    <thead>
-        <th>Name</th>
-        <th>Quantity In Stock</th>
-        <th>Image Path</th>
-    </thead>
-    <tbody>
-    for _, product := range products {
-        <tr>
-            <td>{ product.Name }</td>
-            <td>{ fmt.Sprintf("%d", product.QuantityInStock) }</td>
-            <td>{ product.Image }</td>
-        </tr>
-    }
-    </tbody>
-    </table>
+templ Queries(customers []types.Customer, totalCustomers int, orders []types.Order, totalOrders int, products []types.Product, outputMessages string) {
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Car Dealership</title>
+        <link rel="stylesheet" href="assets/styles/styles.css">
+    </head>
+    <body>
+        @header()
+
+        <h2>Customers</h2>
+        <table>
+        <thead>
+            <th>First Name</th>
+            <th>Last Name</th>
+            <th>Email</th>
+        </thead>
+        <tbody>
+        for _, customer := range customers {
+            <tr>
+                <td>{ customer.FirstName }</td>
+                <td>{ customer.LastName }</td>
+                <td>{ customer.Email }</td>
+            </tr>
+        }
+        </tbody>
+        </table>
+
+        <p>Total Customers: { fmt.Sprintf("%d", totalCustomers) }</p>
+        <pre>{ outputMessages }</pre>
+
+        <h2>Orders</h2>
+        <table>
+        <thead>
+            <th>Customer First Name</th>
+            <th>Customer Last Name</th>
+            <th>Product Name</th>
+            <th>Quantity</th>
+            <th>Price</th>
+            <th>Tax</th>
+            <th>Donation</th>
+        </thead>
+
+        <p>Total Orders: { fmt.Sprintf("%d", totalOrders) }</p>
+        <tbody>
+        for _, order := range orders {
+            <tr>
+                <td>{ order.CustomerFirstName }</td>
+                <td>{ order.CustomerLastName }</td>
+                <td>{ order.ProductName }</td>
+                <td>{ fmt.Sprintf("%d", order.Quantity) }</td>
+                <td>{ fmt.Sprintf("%.2f", order.Price) }</td>
+                <td>{ fmt.Sprintf("%.2f", order.Tax) }</td>
+                <td>{ fmt.Sprintf("%.2f", order.Donation) }</td>
+            </tr>
+        }
+        </tbody>
+        </table>
+
+        <h2>Products</h2>
+        <table>
+        <thead>
+            <th>Name</th>
+            <th>Image Path</th>
+            <th>Price</th>
+            <th>Quantity In Stock</th>
+            
+        </thead>
+        <tbody>
+        for _, product := range products {
+            <tr>
+                <td>{ product.Name }</td>
+                <td>{ product.Image }</td>
+                <td>{ fmt.Sprintf("%.2f", product.Price) }</td>
+                <td>{ fmt.Sprintf("%d", product.QuantityInStock) }</td>
+            </tr>
+        }
+        </tbody>
+        </table>
+
+        @footer()
+    </body>
+    </html>
 }

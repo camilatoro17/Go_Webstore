@@ -23,16 +23,15 @@ CREATE TABLE product (
 
 CREATE TABLE orders (
     id int NOT NULL AUTO_INCREMENT,
-    product_id int,
-    customer_id int,
+    customer_first VARCHAR(100),
+    customer_last VARCHAR(100),
+    product_name VARCHAR(255),
     quantity int,
     price decimal(10,2),
-    tax decimal(6,2),
-    donation decimal(4,2),  -- Renamed from 'decimal' to 'donation'
+    tax decimal(10,2),
+    donation decimal(4,2),
     timestamp bigint,
-    PRIMARY KEY (id),
-    FOREIGN KEY (product_id) REFERENCES product(id),
-    FOREIGN KEY (customer_id) REFERENCES customer(id)
+    PRIMARY KEY (id)
 );
 
 -- populate customer table
@@ -42,6 +41,6 @@ VALUES ('Mickey', 'Mouse', 'mmouse@mines.edu'),
 
 -- insert products
 INSERT INTO product (product_name, image_name, price, in_stock)
-VALUES ('2024 G80 M3', '2024 G80 M3.png', 78000, 0),
-       ('2024 S63 AMG', '2024 S63 AMG.png', 183000, 3),
+VALUES ('2024 G80 M3', '2024 G80 M3.png', 78000, 10),
+       ('2024 S63 AMG', '2024 S63 AMG.png', 183000, 10),
        ('2024 Audi RS7', '2024 Audi RS7.png', 128000, 10);

@@ -6,52 +6,182 @@ import (
 	"go-store/types"
 )
 
-func GetAllProducts(conn *sql.DB) ([]types.Product, error) {
-	rows, err := conn.Query("SELECT product_name, in_stock, image_name FROM product")
+// CUSTOMER FUNCTIONS //
+
+func GetAllCustomers(conn *sql.DB) ([]types.Customer, error) {
+	stmt, err := conn.Prepare("SELECT id, first_name, last_name, email FROM customer")
 	if err != nil {
+		return nil, fmt.Errorf("GetAllCustomers: prepare: %v", err)
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, fmt.Errorf("GetAllCustomers: query: %v", err)
+	}
+	defer rows.Close()
+
+	var customers []types.Customer
+	for rows.Next() {
+		var c types.Customer
+		if err := rows.Scan(&c.ID, &c.FirstName, &c.LastName, &c.Email); err != nil {
+			return nil, fmt.Errorf("GetAllCustomers: scan: %v", err)
+		}
+		customers = append(customers, c)
+	}
+
+	if err := rows.Err(); err != nil {
 		return nil, err
 	}
-	defer rows.Close() //defer = dont run until the end of the function
+
+	return customers, nil
+}
+
+func CustomerByID(conn *sql.DB, id int64) (types.Customer, error) {
+	stmt, err := conn.Prepare("SELECT id, first_name, last_name, email FROM customer WHERE id = ?")
+	if err != nil {
+		return types.Customer{}, fmt.Errorf("CustomerByID: prepare: %v", err)
+	}
+	defer stmt.Close()
+
+	var c types.Customer
+	err = stmt.QueryRow(id).Scan(&c.ID, &c.FirstName, &c.LastName, &c.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c, fmt.Errorf("CustomerByID %d: no such customer", id)
+		}
+		return c, fmt.Errorf("CustomerByID %d: %v", id, err)
+	}
+
+	return c, nil
+}
+
+func CustomerByLastName(conn *sql.DB, lastName string) ([]types.Customer, error) {
+	// Prepare statement
+	stmt, err := conn.Prepare("SELECT * FROM customer WHERE last_name = ?")
+	if err != nil {
+		return nil, fmt.Errorf("CustomerByLastName: prepare: %v", err)
+	}
+	defer stmt.Close()
+
+	// Execute
+	rows, err := stmt.Query(lastName)
+	if err != nil {
+		return nil, fmt.Errorf("CustomerByLastName: query: %v", err)
+	}
+	defer rows.Close()
+
+	// Store results
+	var customers []types.Customer
+	for rows.Next() {
+		var c types.Customer
+
+		if err := rows.Scan(&c.ID, &c.FirstName, &c.LastName, &c.Email); err != nil {
+			return nil, fmt.Errorf("CustomerByLastName: scan: %v", err)
+		}
+		customers = append(customers, c)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return customers, nil
+}
+
+func CustomerByEmail(conn *sql.DB, email string) (types.Customer, error) {
+	stmt, err := conn.Prepare("SELECT id, first_name, last_name, email FROM customer WHERE email = ?")
+	if err != nil {
+		return types.Customer{}, fmt.Errorf("CustomerByEmail: prepare: %v", err)
+	}
+	defer stmt.Close()
+
+	var c types.Customer
+	err = stmt.QueryRow(email).Scan(&c.ID, &c.FirstName, &c.LastName, &c.Email)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return c, fmt.Errorf("CustomerByEmail: no such customer")
+		}
+		return c, fmt.Errorf("CustomerByEmail: %v", err)
+	}
+
+	return c, nil
+}
+
+func AddCustomer(conn *sql.DB, firstName, lastName, email string) (int64, error) {
+	stmt, err := conn.Prepare("INSERT INTO customer (first_name, last_name, email) VALUES (?, ?, ?)")
+	if err != nil {
+		return 0, fmt.Errorf("AddCustomer: prepare: %v", err)
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(firstName, lastName, email)
+	if err != nil {
+		return 0, fmt.Errorf("AddCustomer: exec: %v", err)
+	}
+
+	customerID, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("AddCustomer: %v", err)
+	}
+
+	return customerID, nil
+}
+
+// PRODUCT FUNCTIONS //
+
+func GetAllProducts(conn *sql.DB) ([]types.Product, error) {
+	stmt, err := conn.Prepare("SELECT product_name, image_name, price, in_stock FROM product")
+	if err != nil {
+		return nil, fmt.Errorf("GetAllProducts: prepare: %v", err)
+	}
+	defer stmt.Close() //defer = dont run until the end of the function
+
+	rows, err := stmt.Query() // run the query + error check
+	if err != nil {
+		return nil, fmt.Errorf("GetAllProducts: query: %v", err)
+	}
+	defer rows.Close()
 
 	var products []types.Product
 
 	for rows.Next() {
 		var product types.Product
-		rows.Scan(&product.Name, &product.QuantityInStock, &product.Image)
+		if err := rows.Scan(&product.Name, &product.Image, &product.Price, &product.QuantityInStock); err != nil {
+			return nil, fmt.Errorf("GetAllProducts: scan: %v", err)
+		}
 		products = append(products, product)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 
 	return products, nil
 }
 
-func AddOrder(conn *sql.DB, ord types.Order) (int64, error) {
-	result, err := conn.Exec("INSERT INTO orders (product_id, customer_id, quantity, price) VALUES (?, ?, ?, ?)",
-		ord.ProductID, ord.CustomerID, ord.Quantity, ord.Price)
-	if err != nil {
-		return 0, fmt.Errorf("addOrder: %v", err)
-	}
-
-	id, err := result.LastInsertId()
-	if err != nil {
-		return 0, fmt.Errorf("addOrder: %v", err)
-	}
-	return id, nil
-}
-
 func ProductByName(conn *sql.DB, name string) ([]types.Product, error) {
-	var products []types.Product
-
-	rows, err := conn.Query("SELECT id, product_name, image_name, price, in_stock FROM product WHERE product_name = ?", name)
+	// Prepare statement
+	stmt, err := conn.Prepare("SELECT id, product_name, image_name, price, in_stock FROM product WHERE product_name = ?")
 	if err != nil {
-		return nil, fmt.Errorf("productByName %q: %v", name, err)
+		return nil, fmt.Errorf("ProductByName: prepare: %v", err)
+	}
+	defer stmt.Close()
+
+	// Execute
+	rows, err := stmt.Query(name)
+	if err != nil {
+		return nil, fmt.Errorf("ProductByName: query: %v", err)
 	}
 	defer rows.Close()
 
+	//store results
+	var products []types.Product
 	for rows.Next() {
 		var p types.Product
 
 		if err := rows.Scan(&p.ID, &p.Name, &p.Image, &p.Price, &p.QuantityInStock); err != nil {
-			return nil, fmt.Errorf("productByName %q: %v", name, err)
+			return nil, fmt.Errorf("ProductByName: scan: %v", err)
 		}
 		products = append(products, p)
 	}
@@ -64,55 +194,142 @@ func ProductByName(conn *sql.DB, name string) ([]types.Product, error) {
 }
 
 func ProductByID(conn *sql.DB, id int64) (types.Product, error) {
-	var p types.Product
-	row := conn.QueryRow("SELECT id, product_name, price, in_stock, image_name FROM product WHERE id = ?", id)
+	// Prepare statement
+	stmt, err := conn.Prepare("SELECT id, product_name, price, in_stock, image_name FROM product WHERE id = ?")
+	if err != nil {
+		return types.Product{}, fmt.Errorf("ProductByID: prepare: %v", err)
+	}
+	defer stmt.Close()
 
-	err := row.Scan(&p.ID, &p.Name, &p.Price, &p.QuantityInStock, &p.Image)
+	// Execute
+	var p types.Product
+	err = stmt.QueryRow(id).Scan(&p.ID, &p.Name, &p.Price, &p.QuantityInStock, &p.Image)
+
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return p, fmt.Errorf("productByID %d: no such product", id)
+			return p, fmt.Errorf("ProductByID %d: no such product", id)
 		}
-		return p, fmt.Errorf("productByID %d: %v", id, err)
+		return p, fmt.Errorf("ProductByID %d: %v", id, err)
 	}
 
 	return p, nil
 }
 
-func CustomerByLastName(conn *sql.DB, lastName string) ([]types.Customer, error) {
-	var customers []types.Customer
-	rows, err := conn.Query("SELECT * FROM customer WHERE last_name = ?", lastName)
+func UpdateProductQuantity(conn *sql.DB, productName string, quantitySold int) error {
+	stmt, err := conn.Prepare(`SELECT in_stock FROM product WHERE product_name = ?`)
 	if err != nil {
-		return nil, fmt.Errorf("customerByLastName %q: %v", lastName, err)
+		return fmt.Errorf("UpdateProductQuantity: prepare select: %v", err)
+	}
+	defer stmt.Close()
+
+	var currentStock int
+	err = stmt.QueryRow(productName).Scan(&currentStock)
+	if err != nil {
+		return fmt.Errorf("UpdateProductQuantity: query: %v", err)
+	}
+
+	newStock := currentStock - quantitySold
+	if newStock < 0 {
+		newStock = 0
+	}
+
+	// update in DB
+	updateStmt, err := conn.Prepare(`UPDATE product SET in_stock = ? WHERE product_name = ?`)
+	if err != nil {
+		return fmt.Errorf("UpdateProductQuantity: prepare update: %v", err)
+	}
+	defer updateStmt.Close()
+
+	_, err = updateStmt.Exec(newStock, productName)
+	if err != nil {
+		return fmt.Errorf("UpdateProductQuantity: exec: %v", err)
+	}
+
+	fmt.Printf("Selling %d %s\n", quantitySold, productName)
+	fmt.Printf("Quantity after selling is %d\n", newStock)
+
+	return nil
+}
+
+// ORDER FUNCTIONS //
+
+func GetAllOrders(conn *sql.DB) ([]types.Order, error) {
+	stmt, err := conn.Prepare(`
+        SELECT customer_first, customer_last, product_name, quantity, price, IFNULL(tax, 0), IFNULL(donation, 0)
+        FROM orders`)
+	if err != nil {
+		return nil, fmt.Errorf("GetAllOrders: prepare: %v", err)
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query()
+	if err != nil {
+		return nil, fmt.Errorf("GetAllOrders: query: %v", err)
 	}
 	defer rows.Close()
 
+	var orders []types.Order
 	for rows.Next() {
-		var c types.Customer
-		if err := rows.Scan(&c.ID, &c.FirstName, &c.LastName, &c.Email); err != nil {
-			return nil, fmt.Errorf("customerByLastName %q: %v", lastName, err)
+		var o types.Order
+		if err := rows.Scan(&o.CustomerFirstName, &o.CustomerLastName, &o.ProductName, &o.Quantity, &o.Price, &o.Tax, &o.Donation); err != nil {
+			return nil, fmt.Errorf("GetAllOrders: scan: %v", err)
 		}
-		customers = append(customers, c)
+		orders = append(orders, o)
 	}
 
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 
-	return customers, nil
+	return orders, nil
 }
 
-func OrdersByCustomer(conn *sql.DB, customerID int) ([]types.Order, error) {
-	var orders []types.Order
-	rows, err := conn.Query("SELECT * FROM orders WHERE customer_id = ?", customerID)
+func AddOrder(conn *sql.DB, ord types.Order) (int64, error) {
+	stmt, err := conn.Prepare(`
+        INSERT INTO orders (customer_first, customer_last, product_name, quantity, price, tax, donation, timestamp)
+        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`)
 	if err != nil {
-		return nil, fmt.Errorf("ordersByCustomer %d: %v", customerID, err)
+		return 0, fmt.Errorf("AddOrder: prepare: %v", err)
+	}
+	defer stmt.Close()
+
+	result, err := stmt.Exec(
+		ord.CustomerFirstName, ord.CustomerLastName, ord.ProductName, ord.Quantity, ord.Price, ord.Tax, ord.Donation)
+	if err != nil {
+		return 0, fmt.Errorf("AddOrder: exec: %v", err)
+	}
+
+	orderID, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("AddOrder: %v", err)
+	}
+
+	return orderID, nil
+}
+
+func OrdersByCustomer(conn *sql.DB, customerFirstName string, customerLastName string) ([]types.Order, error) {
+
+	stmt, err := conn.Prepare(`
+        SELECT customer_first, customer_last, product_name, quantity, price, IFNULL(tax, 0), IFNULL(donation, 0)
+        FROM orders
+        WHERE customer_first = ? AND customer_last = ?`)
+	if err != nil {
+		return nil, fmt.Errorf("OrdersByCustomer: prepare: %v", err)
+	}
+	defer stmt.Close()
+
+	rows, err := stmt.Query(customerFirstName, customerLastName)
+	if err != nil {
+		return nil, fmt.Errorf("OrdersByCustomer: query: %v", err)
 	}
 	defer rows.Close()
 
+	var orders []types.Order
 	for rows.Next() {
 		var o types.Order
-		if err := rows.Scan(&o.ID, &o.ProductID, &o.CustomerID, &o.Quantity, &o.Price, &o.Tax, &o.Donation, &o.Timestamp); err != nil {
-			return nil, fmt.Errorf("ordersByCustomer %d: %v", customerID, err)
+
+		if err := rows.Scan(&o.CustomerFirstName, &o.CustomerLastName, &o.ProductName, &o.Quantity, &o.Price, &o.Tax, &o.Donation); err != nil {
+			return nil, fmt.Errorf("OrdersByCustomer: scan: %v", err)
 		}
 		orders = append(orders, o)
 	}

@@ -35,12 +35,12 @@ type Customer struct {
 }
 
 type Order struct {
-	ID         int64
-	ProductID  int
-	CustomerID int
-	Quantity   int
-	Price      float64
-	Tax        float64
-	Donation   float64
-	Timestamp  int64
+    CustomerFirstName string
+    CustomerLastName  string
+    ProductName       string
+    Quantity          int
+    Price             float64
+    Tax               float64
+    Donation          float64
+	Timestamp		  int64
 }
