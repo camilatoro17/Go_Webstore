@@ -5,7 +5,7 @@ import (
 "go-store/types"
 )
 
-templ Store(products map[string]float64) {
+templ Store(products []types.Product) {
 	<div class="container">
 			<form action="/purchase" method="POST">
 
@@ -27,11 +27,13 @@ templ Store(products map[string]float64) {
 
             <label for="car">Available Cars:</label><br>
             <select id="car" name="car" required>
-                <option value="" disabled selected>Select a car</option>
-				for car, price := range products {
-                	<option value={car} data-image={car}>{ fmt.Sprintf("%s : %.2f", car, price) }</option>
+				<option value="" disabled selected>Select a car</option>
+				for _, product := range products {
+					<option value={product.Name} data-image={product.Image}>
+						{ fmt.Sprintf("%s : $%.2f", product.Name, product.Price) }
+					</option>
 				}
-            </select><br>
+        	</select><br>
 
             <label for="quantity">Quantity:</label>
             <input type="number" id="quantity" name="quantity" min="1" max="100" value="1" required><br>

@@ -17,17 +17,17 @@ import (
 	"go-store/types"
 )
 
-var products = map[string]float64{
-	"2024 G80 M3":   78000,
-	"2024 S63 AMG":  183000,
-	"2024 Audi RS7": 128000,
-}
+// var products = map[string]float64{
+// 	"2024 G80 M3":   78000,
+// 	"2024 S63 AMG":  183000,
+// 	"2024 Audi RS7": 128000,
+// }
 
-var productIDs = map[string]int{
-	"2024 G80 M3":   1,
-	"2024 S63 AMG":  2,
-	"2024 Audi RS7": 3,
-}
+// var productIDs = map[string]int{
+// 	"2024 G80 M3":   1,
+// 	"2024 S63 AMG":  2,
+// 	"2024 Audi RS7": 3,
+// }
 
 var conn *sql.DB
 
@@ -61,6 +61,15 @@ func main() {
 
 	// TODO: Render your base store page here
 	e.GET("/store", func(ctx echo.Context) error {
+
+		// Get products from the database
+		products, err := db.GetAllProducts(conn)
+		if err != nil {
+			e.Logger.Errorf("Error fetching products: %v", err)
+			return ctx.String(http.StatusInternalServerError, "Error loading products")
+		}
+
+		// Render the store page with the products
 		return Render(ctx, http.StatusOK, templates.Base(templates.Store(products)))
 	})
 
@@ -118,7 +127,7 @@ func main() {
 			e.Logger.Errorf("%+v", err)
 			return ctx.String(http.StatusInternalServerError, "Error retrieving orders")
 		}
-	
+
 		// get products
 		products, err := db.GetAllProducts(conn)
 		if err != nil {
@@ -140,10 +149,12 @@ func main() {
 		quantitystr := ctx.FormValue("quantity")
 		roundup := ctx.FormValue("donate")
 
-		price, exists := products[car]
-		if !exists {
+		// Fetch product details from the database based on car name
+		products, err := db.ProductByName(conn, car)
+		if err != nil || len(products) == 0 {
 			return ctx.String(http.StatusBadRequest, "Car not found")
 		}
+		product := products[0]
 
 		// Convert quantity from str to int
 		quantity, err := strconv.Atoi(quantitystr)
@@ -158,13 +169,8 @@ func main() {
 			return ctx.String(http.StatusInternalServerError, "Error updating product quantity")
 		}
 
-		products, err := db.ProductByName(conn, car)
-		if err != nil || len(products) == 0 {
-			return ctx.String(http.StatusBadRequest, "Product not found")
-		}
-
 		// Calculate subtotal (price * quantity)
-		subtotal := price * float64(quantity)
+		subtotal := product.Price * float64(quantity)
 
 		// Calculate tax (2.9%)
 		const taxRate = 0.029
@@ -184,41 +190,19 @@ func main() {
 			grandtotal = totalWithTax
 		}
 
-		// TODO: Maybe use this structure to pass the data to your purchase confirmation page
-		// ...
+		// Create the purchaseInfo structure
 		purchaseInfo := types.PurchaseInfo{
 			FirstName:    fname,
 			LastName:     lname,
 			Email:        email,
 			Car:          car,
 			Quantity:     quantity,
-			Price:        price,
+			Price:        product.Price,
 			Total:        totalWithTax,
 			RoundUpTotal: grandtotal,
 		}
 
-		//find products by the name
-		products, err = db.ProductByName(conn, "2024 G80 M3")
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("Products found: %v\n", products)
-
-		//find customers by last name
-		customers, err := db.CustomerByLastName(conn, "Mouse")
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("Customers found: %v\n", customers)
-
-		//find a product by its id=1
-		p, err := db.ProductByID(conn, 1)
-		if err != nil {
-			log.Fatal(err)
-		}
-		fmt.Printf("Product found: %v\n", p)
-
-		//add an order
+		// Add an order to the database
 		orderID, err := db.AddOrder(conn, types.Order{
 			CustomerFirstName: fname,
 			CustomerLastName:  lname,
