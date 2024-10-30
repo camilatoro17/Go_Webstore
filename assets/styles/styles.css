@@ -123,6 +123,7 @@ button {
 .container:empty {
     display: none;
 }
+
 /*For the dbQueries page*/
 table {
     margin: 40px auto;
@@ -134,3 +135,35 @@ th, td {
     padding: 10px;
     text-align: center;
 }
+
+/*For admin page*/
+
+.admin-container {
+    width: 90%;
+    margin: 0 auto;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.section {
+    margin-bottom: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px;
+    border: 1px solid #ccc;
+    text-align: left;
+}
+
+h1, h2 {
+    color: #ffffff;
+}
+
+

@@ -6,6 +6,7 @@ import (
 
 	"database/sql"
 	"fmt"
+	"log"
 
 	"github.com/a-h/templ"
 	"github.com/go-sql-driver/mysql"
@@ -33,14 +34,13 @@ var conn *sql.DB
 func main() {
 	e := echo.New()
 
-	// Capture connection properties.
+	// connection
 	cfg := mysql.Config{
 		User:   "ctorosuarez",
 		Passwd: "skies",
 		DBName: "ctorosuarez",
 	}
 
-	// Get a database handle.
 	var err error
 	conn, err = sql.Open("mysql", cfg.FormatDSN())
 	if err != nil {
@@ -61,7 +61,7 @@ func main() {
 	// TODO: Render your base store page here
 	e.GET("/store", func(ctx echo.Context) error {
 
-		// Get products from the database
+		// Get products from the db
 		products, err := db.GetAllProducts(conn)
 		if err != nil {
 			e.Logger.Errorf("Error fetching products: %v", err)
@@ -144,37 +144,87 @@ func main() {
 		fname := ctx.FormValue("fname")
 		lname := ctx.FormValue("lname")
 		email := ctx.FormValue("email")
-		carIDStr := ctx.FormValue("car") // Get the car ID
+		carIDStr := ctx.FormValue("car")
 		quantityStr := ctx.FormValue("quantity")
 		roundup := ctx.FormValue("donate")
+		timestampStr := ctx.FormValue("timestamp")
 
-		// Debug: Print received form values
-		fmt.Printf("Received form values: carIDStr = %s, quantityStr = %s\n", carIDStr, quantityStr)
+		timestamp, err := strconv.ParseInt(timestampStr, 10, 64)
+		if err != nil {
+			fmt.Printf("Invalid timestamp: %v\n", err)
+			return ctx.String(http.StatusBadRequest, "Invalid timestamp")
+		}
 
-		// Convert car ID from string to int64
+		// check if order with the same timestamp exists
+		exists, err := db.OrderExists(conn, timestamp)
+		if err != nil {
+			log.Printf("Error checking order existence: %v", err)
+			return ctx.String(http.StatusInternalServerError, "Error checking order existence")
+		}
+
+		if exists {
+			fmt.Println("Duplicate order detected. Skipping insertion.")
+			return ctx.String(http.StatusOK, "This order has already been processed.")
+		}
+
+
+		// convert car ID from string to int
 		carID, err := strconv.ParseInt(carIDStr, 10, 64)
 		if err != nil {
 			fmt.Printf("Invalid car ID: %v\n", err)
 			return ctx.String(http.StatusBadRequest, "Invalid car ID")
 		}
 
-		// Fetch product details from the database using the car ID
+		// get product details from the db using car ID
 		product, err := db.ProductByID(conn, carID)
 		if err != nil {
 			fmt.Printf("ProductByID error: %v\n", err)
 			return ctx.String(http.StatusNotFound, "Car not found")
 		}
 
-		fmt.Printf("Product found: %+v\n", product)
-
-		// Convert quantity from string to int
+		// convert quantity from str to int
 		quantity, err := strconv.Atoi(quantityStr)
 		if err != nil {
 			fmt.Printf("Invalid quantity: %v\n", err)
 			return ctx.String(http.StatusBadRequest, "Invalid quantity")
 		}
 
-		// Update the product quantity after the sale
+		isNewCustomer := false
+
+		// check if returning customer
+		_, err = db.CustomerByEmail(conn, email)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				
+				// new customer
+				_, err = db.AddCustomer(conn, fname, lname, email)
+				if err != nil {
+					log.Printf("Error adding customer: %v", err)
+					return ctx.String(http.StatusInternalServerError, "Error adding new customer")
+				}
+				log.Println("Welcome, new customer!")
+				isNewCustomer = true
+			} else {
+				log.Printf("Unexpected error finding customer: %v", err)
+				return ctx.String(http.StatusInternalServerError, "Unexpected error occurred while finding the customer")
+			}
+		} else {
+			// prev customer
+			log.Println("Welcome back, valued customer!")
+		}
+
+		// product, err = db.ProductByID(conn, carID)
+		// if err != nil {
+		// 	fmt.Printf("Error fetching product: %v", err)
+		// 	return ctx.String(http.StatusInternalServerError, "Error fetching product")
+		// }
+
+		// check stock
+		if product.QuantityInStock < quantity {
+			return ctx.String(http.StatusBadRequest, "Not enough stock available")
+		}
+
+		// update product quantity after purchase
 		err = db.UpdateProductQuantity(conn, product.ID, quantity)
 		if err != nil {
 			fmt.Printf("Error updating product quantity: %v\n", err)
@@ -202,6 +252,14 @@ func main() {
 			grandtotal = totalWithTax
 		}
 
+		// Create a personalized welcome message
+		var welcomeMessage string
+		if isNewCustomer {
+			welcomeMessage = fmt.Sprintf("Thank you for your order, %s! Welcome new customer.", fname)
+		} else {
+			welcomeMessage = fmt.Sprintf("Welcome back, %s! Thank you for your order.", fname)
+		}
+
 		// Create the purchaseInfo structure
 		purchaseInfo := types.PurchaseInfo{
 			FirstName:    fname,
@@ -212,6 +270,7 @@ func main() {
 			Price:        product.Price,
 			Total:        totalWithTax,
 			RoundUpTotal: grandtotal,
+			Message:      welcomeMessage,
 		}
 
 		// Add an order to the database
@@ -223,6 +282,7 @@ func main() {
 			Price:             grandtotal,
 			Tax:               tax,
 			Donation:          donation,
+			Timestamp:         timestamp,
 		})
 		if err != nil {
 			fmt.Printf("Error adding order: %v\n", err)
@@ -233,6 +293,33 @@ func main() {
 
 		return Render(ctx, http.StatusOK, templates.Base(templates.PurchaseConfirmation(purchaseInfo)))
 	})
+
+	e.GET("/admin", func(ctx echo.Context) error {
+		// Get all customers
+		customers, err := db.GetAllCustomers(conn)
+		if err != nil {
+			e.Logger.Errorf("Error fetching customers: %v", err)
+			return ctx.String(http.StatusInternalServerError, "Error loading customers")
+		}
+	
+		// Get all orders
+		orders, err := db.GetAllOrders(conn)
+		if err != nil {
+			e.Logger.Errorf("Error fetching orders: %v", err)
+			return ctx.String(http.StatusInternalServerError, "Error loading orders")
+		}
+	
+		// Get all products
+		products, err := db.GetAllProducts(conn)
+		if err != nil {
+			e.Logger.Errorf("Error fetching products: %v", err)
+			return ctx.String(http.StatusInternalServerError, "Error loading products")
+		}
+	
+		// Render the admin page
+		return Render(ctx, http.StatusOK, templates.Base(templates.AdminPage(customers, orders, products)))
+	})
+	
 
 	e.Logger.Fatal(e.Start(":8000"))
 }

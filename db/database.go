@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"go-store/types"
+	"time"
 )
 
 // CUSTOMER FUNCTIONS //
@@ -100,7 +101,7 @@ func CustomerByEmail(conn *sql.DB, email string) (types.Customer, error) {
 	err = stmt.QueryRow(email).Scan(&c.ID, &c.FirstName, &c.LastName, &c.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return c, fmt.Errorf("CustomerByEmail: no such customer")
+			return c, sql.ErrNoRows
 		}
 		return c, fmt.Errorf("CustomerByEmail: %v", err)
 	}
@@ -247,7 +248,7 @@ func UpdateProductQuantity(conn *sql.DB, productID int64, quantitySold int) erro
 
 func GetAllOrders(conn *sql.DB) ([]types.Order, error) {
 	stmt, err := conn.Prepare(`
-        SELECT customer_first, customer_last, product_name, quantity, price, IFNULL(tax, 0), IFNULL(donation, 0)
+        SELECT customer_first, customer_last, product_name, quantity, price, IFNULL(tax, 0), IFNULL(donation, 0), timestamp
         FROM orders`)
 	if err != nil {
 		return nil, fmt.Errorf("GetAllOrders: prepare: %v", err)
@@ -263,9 +264,14 @@ func GetAllOrders(conn *sql.DB) ([]types.Order, error) {
 	var orders []types.Order
 	for rows.Next() {
 		var o types.Order
-		if err := rows.Scan(&o.CustomerFirstName, &o.CustomerLastName, &o.ProductName, &o.Quantity, &o.Price, &o.Tax, &o.Donation); err != nil {
+		if err := rows.Scan(&o.CustomerFirstName, &o.CustomerLastName, &o.ProductName, &o.Quantity, &o.Price, &o.Tax, &o.Donation, &o.Timestamp); err != nil {
 			return nil, fmt.Errorf("GetAllOrders: scan: %v", err)
 		}
+
+		// Convert the timestamp
+		o.ReadableTimestamp = time.UnixMilli(o.Timestamp).Format("2006-01-02 15:04:05 MST")
+
+		// Append the order to the list
 		orders = append(orders, o)
 	}
 
@@ -279,14 +285,14 @@ func GetAllOrders(conn *sql.DB) ([]types.Order, error) {
 func AddOrder(conn *sql.DB, ord types.Order) (int64, error) {
 	stmt, err := conn.Prepare(`
         INSERT INTO orders (customer_first, customer_last, product_name, quantity, price, tax, donation, timestamp)
-        VALUES (?, ?, ?, ?, ?, ?, ?, NOW())`)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`)
 	if err != nil {
 		return 0, fmt.Errorf("AddOrder: prepare: %v", err)
 	}
 	defer stmt.Close()
 
 	result, err := stmt.Exec(
-		ord.CustomerFirstName, ord.CustomerLastName, ord.ProductName, ord.Quantity, ord.Price, ord.Tax, ord.Donation)
+		ord.CustomerFirstName, ord.CustomerLastName, ord.ProductName, ord.Quantity, ord.Price, ord.Tax, ord.Donation, ord.Timestamp)
 	if err != nil {
 		return 0, fmt.Errorf("AddOrder: exec: %v", err)
 	}
@@ -331,4 +337,20 @@ func OrdersByCustomer(conn *sql.DB, customerFirstName string, customerLastName s
 	}
 
 	return orders, nil
+}
+
+func OrderExists(conn *sql.DB, timestamp int64) (bool, error) {
+	stmt, err := conn.Prepare("SELECT COUNT(*) FROM orders WHERE timestamp = ?")
+	if err != nil {
+		return false, fmt.Errorf("OrderExists: prepare: %v", err)
+	}
+	defer stmt.Close()
+
+	var count int
+	err = stmt.QueryRow(timestamp).Scan(&count)
+	if err != nil {
+		return false, fmt.Errorf("OrderExists: query: %v", err)
+	}
+
+	return count > 0, nil
 }

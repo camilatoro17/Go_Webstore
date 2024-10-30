@@ -10,6 +10,7 @@ type PurchaseInfo struct {
 	Price        float64
 	Total        float64
 	RoundUpTotal float64
+	Message      string
 }
 
 type CustomerResults struct {
@@ -43,4 +44,5 @@ type Order struct {
     Tax               float64
     Donation          float64
 	Timestamp		  int64
+	ReadableTimestamp string
 }

@@ -4,6 +4,7 @@ import (
 "fmt"
 "go-store/types"
 "strconv"
+"time"
 )
 
 templ Store(products []types.Product) {
@@ -31,7 +32,7 @@ templ Store(products []types.Product) {
 				<option value="" disabled selected>Select a car</option>
 				for _, product := range products {
 					<option value={fmt.Sprintf("%d", product.ID)} data-image={product.Image} data-quantity={strconv.Itoa(product.QuantityInStock)}>
-            			{ fmt.Sprintf("%s (ID: %d) : $%.2f", product.Name, product.ID, product.Price) }
+            			{ fmt.Sprintf("%s : $%.2f", product.Name, product.Price) }
         			</option>
 				}
         	</select><br>
@@ -54,6 +55,8 @@ templ Store(products []types.Product) {
 
         </fieldset>
 
+		<input type="hidden" name="timestamp" value={ fmt.Sprintf("%d", time.Now().Unix()) }/>
+
 		<button type="submit">Purchase</button>
 
 		</form>
@@ -70,7 +73,7 @@ templ Store(products []types.Product) {
 
 templ PurchaseConfirmation(purchaseInformation types.PurchaseInfo) {
 <div>
-	<p>Thank you for your order, { purchaseInformation.FirstName } { purchaseInformation.LastName }</p>
+	<p>{ purchaseInformation.Message }</p>
 	<p>You have selected { fmt.Sprintf("%d", purchaseInformation.Quantity) } { purchaseInformation.Car } at { fmt.Sprintf("%.2f", purchaseInformation.Price) }</p>
 	<p>Subtotal: { fmt.Sprintf("%.2f", purchaseInformation.Price * float64(purchaseInformation.Quantity)) }</p>
 	<p>Total including tax (2.9%): { fmt.Sprintf("%.2f", purchaseInformation.Total) }</p>
