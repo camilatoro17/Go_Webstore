@@ -131,7 +131,7 @@ func AddCustomer(conn *sql.DB, firstName, lastName, email string) (int64, error)
 // PRODUCT FUNCTIONS //
 
 func GetAllProducts(conn *sql.DB) ([]types.Product, error) {
-	stmt, err := conn.Prepare("SELECT product_name, image_name, price, in_stock FROM product")
+	stmt, err := conn.Prepare("SELECT id, product_name, image_name, price, in_stock FROM product")
 	if err != nil {
 		return nil, fmt.Errorf("GetAllProducts: prepare: %v", err)
 	}
@@ -147,7 +147,7 @@ func GetAllProducts(conn *sql.DB) ([]types.Product, error) {
 
 	for rows.Next() {
 		var product types.Product
-		if err := rows.Scan(&product.Name, &product.Image, &product.Price, &product.QuantityInStock); err != nil {
+		if err := rows.Scan(&product.ID, &product.Name, &product.Image, &product.Price, &product.QuantityInStock); err != nil {
 			return nil, fmt.Errorf("GetAllProducts: scan: %v", err)
 		}
 		products = append(products, product)
@@ -215,38 +215,30 @@ func ProductByID(conn *sql.DB, id int64) (types.Product, error) {
 	return p, nil
 }
 
-func UpdateProductQuantity(conn *sql.DB, productName string, quantitySold int) error {
-	stmt, err := conn.Prepare(`SELECT in_stock FROM product WHERE product_name = ?`)
-	if err != nil {
-		return fmt.Errorf("UpdateProductQuantity: prepare select: %v", err)
-	}
-	defer stmt.Close()
-
-	var currentStock int
-	err = stmt.QueryRow(productName).Scan(&currentStock)
-	if err != nil {
-		return fmt.Errorf("UpdateProductQuantity: query: %v", err)
-	}
-
-	newStock := currentStock - quantitySold
-	if newStock < 0 {
-		newStock = 0
-	}
-
-	// update in DB
-	updateStmt, err := conn.Prepare(`UPDATE product SET in_stock = ? WHERE product_name = ?`)
+func UpdateProductQuantity(conn *sql.DB, productID int64, quantitySold int) error {
+	// Use a single update query to avoid concurrency issues
+	stmt, err := conn.Prepare(`UPDATE product SET in_stock = in_stock - ? WHERE id = ? AND in_stock >= ?`)
 	if err != nil {
 		return fmt.Errorf("UpdateProductQuantity: prepare update: %v", err)
 	}
-	defer updateStmt.Close()
+	defer stmt.Close()
 
-	_, err = updateStmt.Exec(newStock, productName)
+	// Execute the update query
+	res, err := stmt.Exec(quantitySold, productID, quantitySold)
 	if err != nil {
 		return fmt.Errorf("UpdateProductQuantity: exec: %v", err)
 	}
 
-	fmt.Printf("Selling %d %s\n", quantitySold, productName)
-	fmt.Printf("Quantity after selling is %d\n", newStock)
+	// Check if rows were affected
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("UpdateProductQuantity: rows affected: %v", err)
+	}
+	if rowsAffected == 0 {
+		return fmt.Errorf("UpdateProductQuantity: no rows affected, product ID may be incorrect or insufficient stock")
+	}
+
+	fmt.Printf("Selling %d units of product ID %d\n", quantitySold, productID)
 
 	return nil
 }

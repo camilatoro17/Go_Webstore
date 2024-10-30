@@ -3,6 +3,7 @@ package templates
 import (
 "fmt"
 "go-store/types"
+"strconv"
 )
 
 templ Store(products []types.Product) {
@@ -29,9 +30,9 @@ templ Store(products []types.Product) {
             <select id="car" name="car" required>
 				<option value="" disabled selected>Select a car</option>
 				for _, product := range products {
-					<option value={product.Name} data-image={product.Image}>
-						{ fmt.Sprintf("%s : $%.2f", product.Name, product.Price) }
-					</option>
+					<option value={fmt.Sprintf("%d", product.ID)} data-image={product.Image} data-quantity={strconv.Itoa(product.QuantityInStock)}>
+            			{ fmt.Sprintf("%s (ID: %d) : $%.2f", product.Name, product.ID, product.Price) }
+        			</option>
 				}
         	</select><br>
 
@@ -59,10 +60,13 @@ templ Store(products []types.Product) {
 
 		<div id="carpic" style="display:none;">
 			<img id="carimg" src="" alt="Photo of Car" style="max-width:300px;"></img>
+			<p id="quantity-msg" style="font-weight: bold;"></p>
 		</div>
 	
 	</div>
 }
+
+
 
 templ PurchaseConfirmation(purchaseInformation types.PurchaseInfo) {
 <div>

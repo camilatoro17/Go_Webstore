@@ -6,7 +6,6 @@ import (
 
 	"database/sql"
 	"fmt"
-	"log"
 
 	"github.com/a-h/templ"
 	"github.com/go-sql-driver/mysql"
@@ -140,32 +139,45 @@ func main() {
 
 	// TODO: Handle the form submission and return the purchase confirmation view
 	e.POST("/purchase", func(ctx echo.Context) error {
-		// TODO: Grab the form details from ctx.FormValue("...")
+		// Grab the form details from ctx.FormValue("...")
 
 		fname := ctx.FormValue("fname")
 		lname := ctx.FormValue("lname")
 		email := ctx.FormValue("email")
-		car := ctx.FormValue("car")
-		quantitystr := ctx.FormValue("quantity")
+		carIDStr := ctx.FormValue("car") // Get the car ID
+		quantityStr := ctx.FormValue("quantity")
 		roundup := ctx.FormValue("donate")
 
-		// Fetch product details from the database based on car name
-		products, err := db.ProductByName(conn, car)
-		if err != nil || len(products) == 0 {
-			return ctx.String(http.StatusBadRequest, "Car not found")
-		}
-		product := products[0]
+		// Debug: Print received form values
+		fmt.Printf("Received form values: carIDStr = %s, quantityStr = %s\n", carIDStr, quantityStr)
 
-		// Convert quantity from str to int
-		quantity, err := strconv.Atoi(quantitystr)
+		// Convert car ID from string to int64
+		carID, err := strconv.ParseInt(carIDStr, 10, 64)
 		if err != nil {
+			fmt.Printf("Invalid car ID: %v\n", err)
+			return ctx.String(http.StatusBadRequest, "Invalid car ID")
+		}
+
+		// Fetch product details from the database using the car ID
+		product, err := db.ProductByID(conn, carID)
+		if err != nil {
+			fmt.Printf("ProductByID error: %v\n", err)
+			return ctx.String(http.StatusNotFound, "Car not found")
+		}
+
+		fmt.Printf("Product found: %+v\n", product)
+
+		// Convert quantity from string to int
+		quantity, err := strconv.Atoi(quantityStr)
+		if err != nil {
+			fmt.Printf("Invalid quantity: %v\n", err)
 			return ctx.String(http.StatusBadRequest, "Invalid quantity")
 		}
 
 		// Update the product quantity after the sale
-		err = db.UpdateProductQuantity(conn, car, quantity)
+		err = db.UpdateProductQuantity(conn, product.ID, quantity)
 		if err != nil {
-			log.Printf("Error updating product quantity: %v", err)
+			fmt.Printf("Error updating product quantity: %v\n", err)
 			return ctx.String(http.StatusInternalServerError, "Error updating product quantity")
 		}
 
@@ -195,7 +207,7 @@ func main() {
 			FirstName:    fname,
 			LastName:     lname,
 			Email:        email,
-			Car:          car,
+			Car:          product.Name,
 			Quantity:     quantity,
 			Price:        product.Price,
 			Total:        totalWithTax,
@@ -206,14 +218,14 @@ func main() {
 		orderID, err := db.AddOrder(conn, types.Order{
 			CustomerFirstName: fname,
 			CustomerLastName:  lname,
-			ProductName:       car,
+			ProductName:       product.Name,
 			Quantity:          quantity,
 			Price:             grandtotal,
 			Tax:               tax,
 			Donation:          donation,
 		})
 		if err != nil {
-			log.Printf("Error adding order: %v", err)
+			fmt.Printf("Error adding order: %v\n", err)
 			return ctx.String(http.StatusInternalServerError, "Error adding order")
 		}
 
