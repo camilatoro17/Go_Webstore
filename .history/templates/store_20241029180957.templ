@@ -1,0 +1,94 @@
+package templates
+
+import (
+"fmt"
+"go-store/types"
+)
+
+templ Store(products []types.Product) {
+	<div class="container">
+			<form action="/purchase" method="POST">
+
+        <fieldset>
+            <legend>Personal Information</legend>
+
+            <label for="fname">First Name:</label><br>
+            <input type="text" id="fname" name="fname" pattern="[A-Za-z\s']+" required><br>
+
+            <label for="lname">Last Name:</label>
+            <input type="text" id="lname" name="lname" pattern="[A-Za-z\s']+" required><br>
+
+            <label for="email">Email:</label>
+            <input type="email" id="email" name="email" required><br>
+        </fieldset>
+
+        <fieldset>
+            <legend>Product Information</legend>
+
+            <label for="car">Available Cars:</label><br>
+            <select id="car" name="car" required onchange="updateImage()">
+				<option value="" disabled selected>Select a car</option>
+				for _, product := range products {
+					<option value={fmt.Sprintf("%d", product.ID)} data-image={product.Image}>
+            			{ fmt.Sprintf("%s : $%.2f", product.Name, product.Price) }
+        			</option>
+				}
+        	</select><br>
+
+            <label for="quantity">Quantity:</label>
+            <input type="number" id="quantity" name="quantity" min="1" max="100" value="1" required><br>
+
+        </fieldset>
+
+        <fieldset>
+            <legend>Round Up For A Donation</legend>
+
+			<label>
+			<input type="radio" id="yesdonate" name="donate" value="yes" checked> Yes
+			</label><br>
+            
+			<label>
+			<input type="radio" id="nodonate" name="donate" value="no"> No
+			</label>
+
+        </fieldset>
+
+		<button type="submit">Purchase</button>
+
+		</form>
+
+		<div id="carpic" style="display:none;">
+			<img id="carimg" src="" alt="Photo of Car" style="max-width:300px;"></img>
+		</div>
+	
+	</div>
+
+	<script>
+function updateImage() {
+    const carImage = document.getElementById('carimg');
+    const carImageDiv = document.getElementById('carpic');
+
+    // Hardcoded image path for testing
+    const newSrc = '/assets/images/2024 G80 M3.png';
+    console.log("Setting car image src to:", newSrc);
+    carImage.src = newSrc;
+    carImageDiv.style.display = 'block';
+}
+
+
+
+
+	</script>
+}
+
+
+
+templ PurchaseConfirmation(purchaseInformation types.PurchaseInfo) {
+<div>
+	<p>Thank you for your order, { purchaseInformation.FirstName } { purchaseInformation.LastName }</p>
+	<p>You have selected { fmt.Sprintf("%d", purchaseInformation.Quantity) } { purchaseInformation.Car } at { fmt.Sprintf("%.2f", purchaseInformation.Price) }</p>
+	<p>Subtotal: { fmt.Sprintf("%.2f", purchaseInformation.Price * float64(purchaseInformation.Quantity)) }</p>
+	<p>Total including tax (2.9%): { fmt.Sprintf("%.2f", purchaseInformation.Total) }</p>
+	<p>Total with donation: { fmt.Sprintf("%.2f", purchaseInformation.RoundUpTotal) }</p>
+</div>
+}

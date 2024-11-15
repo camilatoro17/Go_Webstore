@@ -1,0 +1,69 @@
+package templates
+
+
+templ Products(products []types.Product) {
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Product Management - Go Webstore</title>
+        <link rel="stylesheet" href="/assets/styles/styles.css">
+    </head>
+    <body>
+        @header()
+
+        <div class="container">
+            <div class="product-list">
+                <h2>Games</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Game</th>
+                            <th>Image</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Inactive?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        for _, product := range products {
+                            <tr>
+                                <td>{ product.Name }</td>
+                                <td>{ product.Image }</td>
+                                <td>{ product.QuantityInStock }</td>
+                                <td>{ fmt.Sprintf("%.2f", product.Price) }</td>
+                                <td>{ product.InactiveStatus }</td>
+                            </tr>
+                        }
+                    </tbody>
+
+                </table>
+            </div>
+            <div class="product-form">
+                <h2>Game Information</h2>
+                <form id="product-form">
+                    <label for="name">Game name: *</label>
+                    <input type="text" id="name" name="name" required><br>
+
+                    <label for="image">Game Image: *</label>
+                    <input type="text" id="image" name="image" required><br>
+
+                    <label for="quantity">Quantity:</label>
+                    <input type="number" id="quantity" name="quantity"><br>
+
+                    <label for="price">Price: *</label>
+                    <input type="number" id="price" name="price" step="0.01" required><br>
+
+                    <label for="inactive">Inactive:</label>
+                    <input type="checkbox" id="inactive" name="inactive"><br>
+
+                    <button type="button" id="add-game">Add Game</button>
+                    <button type="button" id="update-game">Update</button>
+                    <button type="button" id="delete-game" style="color: red;">Delete</button>
+                </form>
+            </div>
+        </div>
+
+        @footer()
+    </body>
+    </html>
+}

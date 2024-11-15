@@ -1,0 +1,86 @@
+package templates
+
+templ Base(content templ.Component) {
+	<!DOCTYPE html>
+	<html>
+	<head>
+		<title>Car Dealership</title>
+		<link rel="stylesheet" href="assets/styles/styles.css">
+	</head>
+	<body>
+		@header()
+		@content
+	
+	@footer()
+
+	
+
+
+	</body>
+	</html>
+}
+
+templ header() {
+	<header>
+		<h1>Car Dealership</h1>
+		<nav id="navbar">
+			<ul>
+				<li>Home</li>
+				<li>Cars</li>
+				<li>About Us</li>
+			</ul>
+		
+		</nav>
+	</header>
+}
+
+	<script>
+        var carSelect = document.getElementById('car');
+        if (carSelect) {
+            carSelect.addEventListener('change', function() {
+                var selected = this.options[this.selectedIndex];
+                var imgURL = selected.getAttribute('data-image');
+                var quantity = selected.getAttribute('data-quantity');
+
+                console.log("Selected Quantity:", quantity);
+
+                var product = document.getElementById('carimg');
+                var imgContainer = document.getElementById('carpic');
+                var quantityMessage = document.getElementById('quantity-msg');
+
+                console.log("Quantity Message Element:", quantityMessage);
+
+                // Show the image
+                if (imgURL) {
+                    product.src = 'assets/images/' + imgURL;
+                    product.alt = selected.text;
+                    imgContainer.style.display = 'block';
+                } else {
+                    product.src = '';
+                    imgContainer.style.display = 'none';
+                }
+
+                // Update the quantity message
+                if (quantity) {
+                    var quantityInt = parseInt(quantity);
+                    console.log("Parsed Quantity:", quantityInt); // Debugging: Log parsed quantity
+
+                    if (quantityInt === 0) {
+                        quantityMessage.textContent = "SOLD OUT";
+                        quantityMessage.style.color = "red";
+                        console.log("Quantity Message Set to: SOLD OUT");
+                    } else if (quantityInt < 5) {
+                        quantityMessage.textContent = `Only ${quantityInt} left`;
+                        quantityMessage.style.color = "red";
+                        console.log(`Quantity Message Set to: Only ${quantityInt} left`);
+                    } else {
+                        quantityMessage.textContent = "";
+                        console.log("Quantity Message Cleared");
+                    }
+                } else {
+                    quantityMessage.textContent = "";
+                    console.log("Quantity Message Cleared (No quantity found)");
+                }
+            });
+        }
+    </script>

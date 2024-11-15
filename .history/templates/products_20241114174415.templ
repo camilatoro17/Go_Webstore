@@ -1,0 +1,79 @@
+package templates
+
+import (
+    "fmt"
+    "go-store/types"
+    "strconv"
+)
+
+templ Products(products []types.Product) {
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Car Management</title>
+        <link rel="stylesheet" href="/assets/styles/styles.css">
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+        <script src="/assets/scripts/products.js"></script>
+    </head>
+    <body>
+        <div class="container">
+            <div class="product-list" style="max-height: 400px; overflow-y: auto;">
+                <h2>Cars</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Car</th>
+                            <th>Image</th>
+                            <th>Quantity</th>
+                            <th>Price</th>
+                            <th>Inactive?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        for _, product := range products {
+                            <tr onclick="selectProductToUpdate({{product.ID}}, '{{product.Name}}', '{{product.Image}}', {{product.QuantityInStock}}, {{product.Price}}, {{product.Inactive}})">
+                                <td>{ product.Name }</td>
+                                <td>{ product.Image }</td>
+                                <td>{ strconv.Itoa(product.QuantityInStock) }</td>
+                                <td>{ fmt.Sprintf("%.2f", product.Price) }</td>
+                                <td>
+                                    if product.Inactive == 1 {
+                                        Yes
+                                    } else {
+                                        No
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="product-form">
+
+                <h2>Add or Update Car</h2>
+                <form id="product-form">
+                    <label for="name">Car Name: *</label>
+                    <input type="text" id="name" name="name" required><br>
+
+                    <label for="image">Car Image Name:</label>
+                    <input type="text" id="image" name="image"><br>
+
+                    <label for="quantity">Quantity Available:</label>
+                    <input type="number" id="quantity" name="quantity" min="0"><br>
+
+                    <label for="price">Price: *</label>
+                    <input type="number" id="price" name="price" step="0.01" required><br>
+
+                    <label for="inactive">Make Inactive:</label>
+                    <input type="checkbox" id="inactive" name="inactive"><br>
+
+                    <button type="button" id="add-car" style="background-color: #0073e6;">Add Car</button>
+                    <button type="button" id="update-car" style="background-color: #0073e6;">Update Car</button>
+                    <button type="button" id="delete-car">Delete Car</button>
+                </form>
+            </div>
+        </div>
+    </body>
+    </html>
+}

@@ -1,0 +1,180 @@
+package templates
+
+import (
+    "math/rand"
+    "fmt"
+    "go-store/types"
+    "strconv"
+)
+templ OrderEntry(products []types.Product) {
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Go Webstore</title>
+        <link rel="stylesheet" href={fmt.Sprintf("assets/styles/styles.css?%d", rand.Intn(10000))}>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> 
+    </head>
+    <body>
+        @header() 
+
+        <div class="container">
+            <div class="content">
+                <main>
+                    <form id="order-form">
+                        <fieldset>
+                            <legend>Personal Information</legend>
+                            <label for="fname">First Name:</label><br>
+                            <input type="text" id="fname" name="fname" pattern="[A-Za-z\s']+" required onkeyup="showHint(this.value, 'first')"><br>
+
+                            <label for="lname">Last Name:</label><br>
+                            <input type="text" id="lname" name="lname" pattern="[A-Za-z\s']+" required onkeyup="showHint(this.value, 'last')"><br>
+
+                            <label for="email">Email:</label><br>
+                            <input type="email" id="email" name="email" required><br>
+                        </fieldset>
+
+                        <fieldset>
+                            <legend>Product Information</legend>
+
+                            <label for="car">Available Cars:</label><br>
+                            <select id="car" name="car" required onchange="updateAvailableQuantity()">
+                                <option value="" disabled selected>Select a car</option>
+                                for _, product := range products {
+                                    <option value={product.Name} data-image={product.Image} data-quantity={strconv.Itoa(product.QuantityInStock)}>
+                                        { fmt.Sprintf("%s : $%.2f", product.Name, product.Price) }
+                                    </option>
+                                }
+                            </select><br>
+
+                            <label for="available">Available:</label><br>
+                            <input type="text" id="available" readonly value="Select a product" class="available-field"><br>
+
+                            <label for="quantity">Quantity:</label><br>
+                            <input type="number" id="quantity" name="quantity" min="1" max="100" value="1" required><br>
+                        </fieldset>
+
+                        <button type="submit">Purchase</button>
+                        <button type="reset">Clear Fields</button>
+                    </form>
+                </main>
+                <aside id="asideContent">
+                    <h3>Customer Information</h3>
+                    <table id="customer-list" border="1" style="display:none;">
+                        <thead>
+                            <tr>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>Email</th>
+                            </tr>
+                        </thead>
+                        <tbody id="suggestions-body">
+                            
+                        </tbody>
+                    </table>
+                </aside>
+            </div>
+        </div>
+
+        @footer() 
+
+        <script>
+        function updateAvailableQuantity() {
+            // Get what they selected
+            const carSelect = document.getElementById("car");
+            const availableField = document.getElementById("available");
+
+            // Get selected attributes
+            const selectedOption = carSelect.options[carSelect.selectedIndex];
+            const quantity = selectedOption.getAttribute("data-quantity");
+
+            // Update available with quantity
+            availableField.value = quantity ? quantity : "Select a product";
+        }
+
+        function showHint(value, field) {
+            const suggestionsBody = document.getElementById("suggestions-body");
+            if (!suggestionsBody) {
+                console.error("Element with id 'suggestions-body' not found");
+                return;
+            }
+
+            if (value.length === 0) {
+                suggestionsBody.innerHTML = "<tr><td colspan='3'>No results</td></tr>";
+                document.getElementById("customer-list").style.display = "none";
+                return;
+            }
+
+            fetch(`/get_customers?query=${value}&field=${field}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error("Network response was not ok");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    let suggestions = "";
+                    if (data.customers && data.customers.length > 0) {
+                        document.getElementById("customer-list").style.display = "block";
+                        data.customers.forEach(customer => {
+                            suggestions += `<tr onclick="selectCustomer('${customer.FirstName}', '${customer.LastName}', '${customer.Email}', event)">
+                                                <td>${customer.FirstName}</td>
+                                                <td>${customer.LastName}</td>
+                                                <td>${customer.Email}</td>
+                                            </tr>`;
+                        });
+                    } else {
+                        suggestions = "<tr><td colspan='3'>No results</td></tr>";
+                        document.getElementById("customer-list").style.display = "none";
+                    }
+                    suggestionsBody.innerHTML = suggestions;
+                })
+                .catch(error => console.error("Error fetching customers:", error));
+        }
+
+
+
+
+        function selectCustomer(firstName, lastName, email) {
+            document.getElementById("fname").value = firstName;
+            document.getElementById("lname").value = lastName;
+            document.getElementById("email").value = email;
+
+            const previouslySelected = document.querySelector("#suggestions-body .selected");
+            if (previouslySelected) {
+                previouslySelected.classList.remove("selected");
+            }
+
+            event.currentTarget.classList.add("selected");
+        }
+
+        $(document).ready(function() {
+            $("#order-form").submit(function(e) {
+                e.preventDefault();
+
+                $.ajax({
+                    type: "POST",
+                    url: "/add_order",
+                    data: $(this).serialize(),
+                    success: function(response) {
+                        // Show confirmation msg
+                        $("#asideContent").html(`<p>${response.message}</p>`);
+
+                        // Clear table and form
+                        $("#suggestions-body").empty();
+                        $("#order-form")[0].reset();
+                        $("#available").val("Select a product");
+                    },
+                    error: function(xhr) {
+                        const errorResponse = JSON.parse(xhr.responseText);
+                        $("#asideContent").html(`<p>${errorResponse.error}</p>`);
+                    }
+                });
+            });
+        });
+
+
+        </script>
+
+    </body>
+    </html>
+}
