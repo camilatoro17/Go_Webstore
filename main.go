@@ -1,7 +1,6 @@
 package main
 
 import (
-	"net/http"
 	"strconv"
 
 	"database/sql"
@@ -15,6 +14,11 @@ import (
 	"go-store/db"
 	"go-store/templates"
 	"go-store/types"
+
+	"net/http"
+
+	"github.com/gorilla/sessions"
+	"github.com/labstack/echo-contrib/session"
 )
 
 // var products = map[string]float64{
@@ -33,6 +37,8 @@ var conn *sql.DB
 
 func main() {
 	e := echo.New()
+
+	e.Use(session.Middleware(sessions.NewCookieStore([]byte("secret"))))
 
 	// connection
 	cfg := mysql.Config{
@@ -302,11 +308,40 @@ func main() {
 	})
 
 	e.GET("/order_entry", func(ctx echo.Context) error {
-		products, err := db.GetAllProducts(conn)
+		// Retrieve the session
+		sess, err := session.Get("session", ctx)
 		if err != nil {
-			return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error loading products: %v", err))
+			ctx.Logger().Errorf("Session error: %v", err)
+			return ctx.Redirect(http.StatusSeeOther, "/?error=must_log_in")
 		}
 
+		// Debug: Log session values
+		ctx.Logger().Infof("Session values: %+v", sess.Values)
+
+		// Check if user_role exists in session
+		userRole, ok := sess.Values["user_role"].(string)
+		if !ok || userRole == "" {
+			ctx.Logger().Error("User role is missing in session.")
+			return ctx.Redirect(http.StatusSeeOther, "/?error=must_log_in")
+		}
+
+		// Debug: Log user role
+		ctx.Logger().Infof("User role: %s", userRole)
+
+		// Check if the user is authorized to access this page
+		if userRole != "1" && userRole != "2" {
+			ctx.Logger().Warn("User is not authorized for order entry.")
+			return ctx.Redirect(http.StatusSeeOther, "/?error=not_authorized")
+		}
+
+		// Fetch products
+		products, err := db.GetAllProducts(conn)
+		if err != nil {
+			ctx.Logger().Errorf("Error fetching products: %v", err)
+			return ctx.String(http.StatusInternalServerError, "Error loading products")
+		}
+
+		// Render the page
 		return Render(ctx, http.StatusOK, templates.OrderEntry(products))
 	})
 
@@ -394,6 +429,18 @@ func main() {
 	})
 
 	e.GET("/admin", func(ctx echo.Context) error {
+
+		sess, err := session.Get("session", ctx)
+		if err != nil || sess.Values["user_role"] == nil {
+
+			return ctx.Redirect(http.StatusSeeOther, "/?error=must_log_in")
+		}
+
+		userRole := sess.Values["user_role"].(string)
+		if userRole != "2" {
+			return ctx.Redirect(http.StatusSeeOther, "/?error=not_authorized")
+		}
+
 		// Get all customers
 		customers, err := db.GetAllCustomers(conn)
 		if err != nil {
@@ -423,6 +470,16 @@ func main() {
 		// Get all products
 		products, err := db.GetAllProducts(conn)
 
+		sess, err := session.Get("session", ctx)
+		if err != nil || sess.Values["user_role"] == nil {
+			return ctx.Redirect(http.StatusSeeOther, "/?error=must_log_in")
+		}
+
+		userRole := sess.Values["user_role"].(string)
+		if userRole != "2" {
+			return ctx.Redirect(http.StatusSeeOther, "/?error=not_authorized")
+		}
+
 		for _, product := range products {
 			fmt.Printf("Product: %s, Inactive: %d\n", product.Name, product.Inactive)
 		}
@@ -433,6 +490,111 @@ func main() {
 		}
 
 		return Render(ctx, http.StatusOK, templates.Base(templates.Products(products)))
+	})
+
+	e.GET("/", func(ctx echo.Context) error {
+		sess, err := session.Get("session", ctx)
+		if err != nil {
+			return err
+		}
+
+		role := ""
+		if r, ok := sess.Values["user_role"].(int); ok {
+			role = fmt.Sprintf("%d", r)
+		}
+
+		errorMsg := ctx.QueryParam("error")
+		return Render(ctx, http.StatusOK, templates.Base(templates.Index(errorMsg, role)))
+	})
+
+	e.POST("/login", func(ctx echo.Context) error {
+
+		sess, err := session.Get("session", ctx)
+		if err != nil {
+			ctx.Logger().Errorf("Error starting session: %v", err)
+			return ctx.Redirect(http.StatusSeeOther, "/?error=session_error")
+		}
+
+		email := ctx.FormValue("email")
+		password := ctx.FormValue("password")
+
+		if email == "" || password == "" {
+			sess.Values["error"] = "Email and password are required."
+			sess.Save(ctx.Request(), ctx.Response())
+			return ctx.Redirect(http.StatusSeeOther, "/?error=missing_credentials")
+		}
+
+		user, err := db.Authenticate(conn, email, password)
+		if err != nil {
+			ctx.Logger().Warnf("Failed login attempt for email: %s", email)
+			sess.Values["error"] = "Invalid credentials."
+			sess.Save(ctx.Request(), ctx.Response())
+			return ctx.Redirect(http.StatusSeeOther, "/?error=invalid_user")
+		}
+
+		sess.Values["user_role"] = fmt.Sprintf("%d", user.Role)
+		sess.Values["user_name"] = user.FirstName
+		if err := sess.Save(ctx.Request(), ctx.Response()); err != nil {
+			ctx.Logger().Errorf("Error saving session: %v", err)
+			return ctx.Redirect(http.StatusSeeOther, "/?error=session_save_error")
+		}
+
+		ctx.SetCookie(&http.Cookie{
+			Name:     "user_role",
+			Value:    fmt.Sprintf("%d", user.Role),
+			Path:     "/",
+			MaxAge:   3600,
+			HttpOnly: false,
+		})
+		ctx.SetCookie(&http.Cookie{
+			Name:     "user_name",
+			Value:    user.FirstName,
+			Path:     "/",
+			MaxAge:   3600,
+			HttpOnly: false,
+		})
+
+		switch user.Role {
+		case 1:
+			ctx.Logger().Infof("CS Rep logged in: %s", user.FirstName)
+			return ctx.Redirect(http.StatusFound, "/order_entry")
+		case 2:
+			ctx.Logger().Infof("Admin logged in: %s", user.FirstName)
+			return ctx.Redirect(http.StatusFound, "/products")
+		default:
+			ctx.Logger().Warnf("Unrecognized role for user: %s", user.FirstName)
+			return ctx.Redirect(http.StatusSeeOther, "/store")
+		}
+	})
+
+	e.GET("/logout", func(ctx echo.Context) error {
+
+		sess, err := session.Get("session", ctx)
+		if err != nil {
+			return err
+		}
+
+		sess.Values = map[interface{}]interface{}{}
+		sess.Options.MaxAge = -1
+		if err := sess.Save(ctx.Request(), ctx.Response()); err != nil {
+			return err
+		}
+
+		http.SetCookie(ctx.Response(), &http.Cookie{
+			Name:   "user_role",
+			Value:  "",
+			Path:   "/",
+			MaxAge: -1,
+		})
+
+		http.SetCookie(ctx.Response(), &http.Cookie{
+			Name:   "user_name",
+			Value:  "",
+			Path:   "/",
+			MaxAge: -1,
+		})
+
+		return ctx.Redirect(http.StatusSeeOther, "/")
 	})
 
 	e.POST("/add_car", func(ctx echo.Context) error {
@@ -469,14 +631,14 @@ func main() {
 		if err != nil {
 			return ctx.String(http.StatusBadRequest, "Invalid car ID")
 		}
-	
+
 		var product types.Product
 		product.ID = int64(id)
-	
+
 		// Get form values
 		product.Name = ctx.FormValue("name")
 		product.Image = ctx.FormValue("image")
-	
+
 		// Get price
 		priceStr := ctx.FormValue("price")
 		price, err := strconv.ParseFloat(priceStr, 64)
@@ -484,7 +646,7 @@ func main() {
 			return ctx.String(http.StatusBadRequest, "Invalid price value")
 		}
 		product.Price = price
-	
+
 		// Get quantity
 		quantityStr := ctx.FormValue("quantity")
 		quantity, err := strconv.Atoi(quantityStr)
@@ -492,24 +654,23 @@ func main() {
 			return ctx.String(http.StatusBadRequest, "Invalid quantity value")
 		}
 		product.QuantityInStock = quantity
-	
+
 		inactiveStr := ctx.FormValue("inactive")
 		inactive := 0
 		if inactiveStr == "1" {
 			inactive = 1
 		}
 		product.Inactive = inactive
-	
+
 		fmt.Printf("Updating product: %+v\n", product)
-	
+
 		// Update car in db
 		if err := db.UpdateCar(conn, product); err != nil {
 			return ctx.String(http.StatusInternalServerError, fmt.Sprintf("Error updating car: %v", err))
 		}
-	
+
 		return ctx.JSON(http.StatusOK, map[string]string{"message": "Car updated successfully"})
 	})
-	
 
 	e.DELETE("/delete_car/:id", func(ctx echo.Context) error {
 		id, err := strconv.Atoi(ctx.Param("id"))

@@ -1,0 +1,18 @@
+.nav-container {
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    padding-top: 20px;
+}
+
+.nav {
+    display: flex !important;
+    justify-content: center !important;
+    list-style: none !important;
+    padding: 0;
+    margin: 0;
+}
+
+.nav li {
+    margin: 0 15px;
+}

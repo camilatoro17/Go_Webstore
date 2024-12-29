@@ -4,7 +4,6 @@ import (
 "fmt"
 "go-store/types"
 "strconv"
-"time"
 )
 
 templ Store(products []types.Product) {
@@ -55,7 +54,7 @@ templ Store(products []types.Product) {
 
         </fieldset>
 
-		<input type="hidden" name="timestamp" value={ fmt.Sprintf("%d", time.Now().Unix()) }/>
+		<input type="hidden" id="timestamp" name="timestamp" />
 
 		<button type="submit">Purchase</button>
 
@@ -65,18 +64,141 @@ templ Store(products []types.Product) {
 			<img id="carimg" src="" alt="Photo of Car" style="max-width:300px;"></img>
 			<p id="quantity-msg" style="font-weight: bold;"></p>
 		</div>
+
+		<script>
+		// Function to set a cookie
+		function setCookie(name, value, daysToLive) {
+			let cookie = name + "=" + encodeURIComponent(value);
+			if (typeof daysToLive === "number") {
+				cookie += "; max-age=" + (daysToLive * 24 * 60 * 60);
+			}
+			document.cookie = cookie;
+		}
+
+		// Function to get a cookie
+		function getCookie(name) {
+			let cookieArr = document.cookie.split(";");
+			for (let i = 0; i < cookieArr.length; i++) {
+				let cookiePair = cookieArr[i].split("=");
+				if (name == cookiePair[0].trim()) {
+					return decodeURIComponent(cookiePair[1]);
+				}
+			}
+			return null;
+		}
+
+		// Track selected product
+		document.getElementById("car").addEventListener("change", function () {
+			const selectedCar = this.options[this.selectedIndex].text; // Get the product name
+			let viewedProducts = getCookie("viewedProducts");
+			viewedProducts = viewedProducts ? JSON.parse(viewedProducts) : [];
+			
+			// Add the product to the viewed list if not already present
+			if (!viewedProducts.includes(selectedCar)) {
+				viewedProducts.push(selectedCar);
+				setCookie("viewedProducts", JSON.stringify(viewedProducts), 7); // Store for 7 days
+			}
+		});
+
+		// Reset cookies on page load
+		document.addEventListener("DOMContentLoaded", function () {
+			setCookie("viewedProducts", JSON.stringify([]), 7);
+
+			document.querySelector("form").addEventListener("submit", function() {
+			const timestampField = document.getElementById("timestamp");
+			timestampField.value = Math.floor(Date.now() / 1000);
+    });
+		});
+
+		</script>
+
 	
 	</div>
 }
 
 
-
 templ PurchaseConfirmation(purchaseInformation types.PurchaseInfo) {
-<div>
-	<p>{ purchaseInformation.Message }</p>
-	<p>You have selected { fmt.Sprintf("%d", purchaseInformation.Quantity) } { purchaseInformation.Car } at { fmt.Sprintf("%.2f", purchaseInformation.Price) }</p>
-	<p>Subtotal: { fmt.Sprintf("%.2f", purchaseInformation.Price * float64(purchaseInformation.Quantity)) }</p>
-	<p>Total including tax (2.9%): { fmt.Sprintf("%.2f", purchaseInformation.Total) }</p>
-	<p>Total with donation: { fmt.Sprintf("%.2f", purchaseInformation.RoundUpTotal) }</p>
-</div>
+	<div>
+		<p>{ purchaseInformation.Message }</p>
+		<p>You have selected { fmt.Sprintf("%d", purchaseInformation.Quantity) } { purchaseInformation.Car } at { fmt.Sprintf("%.2f", purchaseInformation.Price) }</p>
+		<p>Subtotal: { fmt.Sprintf("%.2f", purchaseInformation.Price * float64(purchaseInformation.Quantity)) }</p>
+		<p>Total including tax (2.9%): { fmt.Sprintf("%.2f", purchaseInformation.Total) }</p>
+		<p>Total with donation: { fmt.Sprintf("%.2f", purchaseInformation.RoundUpTotal) }</p>
+		
+		<div id="viewedInStore" style="margin-top: 20px; color: #FFA500;">
+			<h3>Based on your viewing history, we'd like to offer 20% off and free car mats for these items:</h3>
+			<ul id="viewed-list" style="color: #FFA500;"></ul>
+		</div>
+
+		<script>
+			// Purchased car information passed from the server
+			const purchasedCar = "{purchaseInformation.Car} : ${parseFloat({purchaseInformation.Price}).toFixed(2)}";
+			console.log("Purchased Car:", purchasedCar);
+
+			// Function to get cookie
+			function getCookie(name) {
+				let cookieArr = document.cookie.split(";");
+				for (let i = 0; i < cookieArr.length; i++) {
+					let cookiePair = cookieArr[i].split("=");
+					if (name === cookiePair[0].trim()) {
+						return decodeURIComponent(cookiePair[1]);
+					}
+				}
+				return null;
+			}
+
+			// Function to set a cookie
+			function setCookie(name, value, daysToLive) {
+				let cookie = name + "=" + encodeURIComponent(value);
+				if (typeof daysToLive === "number") {
+					cookie += "; max-age=" + (daysToLive * 24 * 60 * 60);
+				}
+				document.cookie = cookie;
+			}
+
+			document.addEventListener("DOMContentLoaded", function () {
+				const viewedProductsCookie = getCookie("viewedProducts");
+
+				if (viewedProductsCookie) {
+					let viewedProducts = JSON.parse(viewedProductsCookie);
+					console.log("Viewed Products Before Filtering:", viewedProducts);
+
+					let viewedList = document.getElementById("viewed-list");
+					viewedList.innerHTML = ""; // Clear the list
+
+					let filteredProducts = [];
+					for (let i = 0; i < viewedProducts.length; i++) {
+						console.log(`Comparing: '${viewedProducts[i]}' with '${purchasedCar}'`);
+						if (viewedProducts[i] !== purchasedCar) {
+							filteredProducts.push(viewedProducts[i]);
+							let listItem = document.createElement("li");
+							listItem.textContent = viewedProducts[i];
+							viewedList.appendChild(listItem);
+						}
+					}
+
+					console.log("Filtered Products:", filteredProducts);
+
+					// Reset the cookie with only the filtered products
+					setCookie("viewedProducts", JSON.stringify(filteredProducts), 7);
+
+					// Show or hide the section based on filteredProducts length
+					const viewedInStoreSection = document.getElementById("viewedInStore");
+					if (filteredProducts.length === 0) {
+						viewedInStoreSection.style.display = "none"; // Hide the entire section
+					} else {
+						viewedInStoreSection.style.display = "block"; // Ensure it's visible if items remain
+					}
+				} else {
+					// Hide the section if no cookie exists
+					document.getElementById("viewedInStore").style.display = "none";
+				}
+			});
+		</script>
+
+	</div>
 }
+
+
+
+

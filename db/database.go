@@ -408,3 +408,15 @@ func OrderExists(conn *sql.DB, timestamp int64) (bool, error) {
 
 	return count > 0, nil
 }
+
+// USER AUTHENTICATION
+func Authenticate(conn *sql.DB, email, password string) (types.User, error) {
+	var user types.User
+	query := "SELECT id, first_name, role FROM users WHERE email = ? AND password = ?"
+	err := conn.QueryRow(query, email, password).Scan(&user.ID, &user.FirstName, &user.Role)
+	if err != nil {
+		return user, err
+	}
+	return user, nil
+}
+

@@ -1,0 +1,48 @@
+package templates
+
+templ Index(errorMsg string, role string) {
+    <!DOCTYPE html>
+	<html>
+	<head>
+		<title>Car Dealership</title>
+        <link rel="stylesheet" href="assets/styles/login.css">
+
+	</head>
+	<body>
+
+
+
+
+    <div class="login-container">
+        <div class="login-form">
+            <p>Welcome, please login or continue as guest</p>
+            <span id="error-message" style="color: red; font-weight: bold; display: none;">Invalid credentials</span>
+            <form action="/login" method="POST">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+                <label for="password">Password:</label>
+                <input type="password" id="password" name="password" required>
+                <button type="submit">Log in</button>
+            </form>
+        </div>
+        <a href="#" class="guest-button" onclick="continueAsGuest()">Continue as Guest</a>
+    </div>
+
+    <script>
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('error') === 'invalid_user') {
+            document.getElementById('error-message').style.display = 'block';
+        }
+
+        function continueAsGuest() {
+        document.cookie = "user_role=0; path=/";
+        document.cookie = "user_name=Guest; path=/";
+
+        window.location.href = "/store";
+    }
+    </script>
+
+    </body>
+    </html>
+
+}

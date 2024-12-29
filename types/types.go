@@ -47,3 +47,9 @@ type Order struct {
 	Timestamp         int64
 	ReadableTimestamp string
 }
+
+type User struct {
+    ID        int64
+    FirstName string
+    Role      int
+}

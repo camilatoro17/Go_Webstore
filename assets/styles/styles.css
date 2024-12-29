@@ -17,21 +17,6 @@ header h1 {
     margin: 0;
 }
 
-#navbar {
-    margin-top: 10px;
-}
-
-#navbar ul {
-    list-style: none;
-    padding: 0;
-    display: flex;
-    gap: 20px;
-    justify-content: center;
-}
-
-#navbar ul li {
-    display: inline;
-}
 
 .container {
     
@@ -207,4 +192,3 @@ aside {
     background-color: #9ca0ca;
     color: #ffffff;
 }
-

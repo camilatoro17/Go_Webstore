@@ -6,12 +6,15 @@ templ Base(content templ.Component) {
 	<head>
 		<title>Car Dealership</title>
 		<link rel="stylesheet" href="assets/styles/styles.css">
+        <link rel="stylesheet" href="assets/styles/nav.css">
 	</head>
 	<body>
+        <div id="user-role" data-role="{{.Role}}" style="display: none;"></div>
+
 		@header()
-		@content
+	    @content
 	
-	@footer()
+	    @footer()
 
 	
 	<script>
@@ -63,6 +66,21 @@ templ Base(content templ.Component) {
                 }
             });
         }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            // Check if there is an error message in the query string
+            const errorMsg = new URLSearchParams(window.location.search).get('error');
+            const errorMessageDiv = document.getElementById('error-message');
+            
+            if (errorMsg) {
+                errorMessageDiv.style.display = 'block'; // Show the error message
+                if (errorMsg === 'must_log_in') {
+                    errorMessageDiv.textContent = "You must log in first.";
+                } else if (errorMsg === 'not_authorized') {
+                    errorMessageDiv.textContent = "You are not authorized to view this page.";
+                }
+            }
+        });
     </script>
 
 	</body>
@@ -70,16 +88,73 @@ templ Base(content templ.Component) {
 }
 
 templ header() {
-	<header>
-		<h1>Car Dealership</h1>
-		<nav id="navbar">
-			<ul>
-				<li><a href="/store">Home</a></li>
-				<li>About Us</li>
-				<li class="admin-link"><a href="/admin">Admin</a></li>
-                <li><a href="/products">Cars</a></li>
-			</ul>
-		
-		</nav>
-	</header>
+    <header>
+            <h1>Go Webstore</h1>
+        <div class="nav-container">
+            <ul class="nav">
+                <li><a href="/">Home</a></li>
+                <li><a href="/store">Store</a></li>
+                <li class="admin-link" style="display: none;"><a href="/admin">Admin</a></li>
+                <li class="products-link" style="display: none;"><a href="/products">Products</a></li>
+                <li class="order-entry-link" style="display: none;"><a href="/order_entry">Order Entry</a></li>
+                <li id="logout-link" style="float: right; display: none;"><a href="/logout">Logout</a></li>
+            </ul>
+        </div>
+
+
+        <div class="user-info">
+            <p id="user-greeting">Welcome, Guest</p>
+        </div>
+
+        <div id="error-message" style="display: none; color: red; font-weight: bold; text-align: center;"></div>
+    </header>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            function getCookie(name) {
+                const value = `; ${document.cookie}`;
+                const parts = value.split(`; ${name}=`);
+                if (parts.length === 2) return parts.pop().split(';').shift();
+                return null;
+            }
+
+            const userRole = getCookie('user_role');
+            const userName = getCookie('user_name');
+
+            console.log("role:", userRole);
+            console.log("username:", userName); 
+
+            const greeting = document.getElementById('user-greeting');
+            if (userName) {
+                greeting.textContent = `Welcome ${userName}!`;
+            } else {
+                greeting.textContent = "Welcome Guest!";
+            }
+
+            // menu options based on role
+            if (userRole === "1") {
+                // customer Service
+                document.querySelector(".order-entry-link").style.display = "block";
+                document.getElementById("logout-link").style.display = "block";
+            } else if (userRole === "2") {
+                // admin
+                document.querySelector(".order-entry-link").style.display = "block";
+                document.querySelector(".products-link").style.display = "block";
+                document.querySelector(".admin-link").style.display = "block";
+                document.getElementById("logout-link").style.display = "block";
+            } else if (userRole === "0") {
+                // guest
+                console.log("Guest logged in");
+                document.getElementById("logout-link").style.display = "none";
+                document.querySelector(".order-entry-link").style.display = "none";
+                document.querySelector(".products-link").style.display = "none";
+                document.querySelector(".admin-link").style.display = "none";
+            } else {
+                // if no role is found
+                console.log("No role found, treating as guest");
+                greeting.textContent = "Welcome Guest!";
+            }
+        });
+    </script>
+
 }

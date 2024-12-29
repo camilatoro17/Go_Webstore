@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"go-store/types"
 	"strconv"
-	"time"
 )
 
 func Store(products []types.Product) templ.Component {
@@ -48,7 +47,7 @@ func Store(products []types.Product) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", product.ID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 34, Col: 49}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 33, Col: 49}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 			if templ_7745c5c3_Err != nil {
@@ -61,7 +60,7 @@ func Store(products []types.Product) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(product.Image)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 34, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 33, Col: 76}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -74,7 +73,7 @@ func Store(products []types.Product) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(strconv.Itoa(product.QuantityInStock))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 34, Col: 130}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 33, Col: 130}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -87,7 +86,7 @@ func Store(products []types.Product) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s : $%.2f", product.Name, product.Price))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 35, Col: 71}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 34, Col: 71}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -98,20 +97,7 @@ func Store(products []types.Product) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</select><br><label for=\"quantity\">Quantity:</label> <input type=\"number\" id=\"quantity\" name=\"quantity\" min=\"1\" max=\"100\" value=\"1\" required><br></fieldset><fieldset><legend>Round Up For A Donation</legend> <label><input type=\"radio\" id=\"yesdonate\" name=\"donate\" value=\"yes\" checked> Yes</label><br><label><input type=\"radio\" id=\"nodonate\" name=\"donate\" value=\"no\"> No</label></fieldset><input type=\"hidden\" name=\"timestamp\" value=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var6 string
-		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", time.Now().Unix()))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 58, Col: 84}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("\"> <button type=\"submit\">Purchase</button></form><div id=\"carpic\" style=\"display:none;\"><img id=\"carimg\" src=\"\" alt=\"Photo of Car\" style=\"max-width:300px;\"><p id=\"quantity-msg\" style=\"font-weight: bold;\"></p></div></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</select><br><label for=\"quantity\">Quantity:</label> <input type=\"number\" id=\"quantity\" name=\"quantity\" min=\"1\" max=\"100\" value=\"1\" required><br></fieldset><fieldset><legend>Round Up For A Donation</legend> <label><input type=\"radio\" id=\"yesdonate\" name=\"donate\" value=\"yes\" checked> Yes</label><br><label><input type=\"radio\" id=\"nodonate\" name=\"donate\" value=\"no\"> No</label></fieldset><input type=\"hidden\" id=\"timestamp\" name=\"timestamp\"> <button type=\"submit\">Purchase</button></form><div id=\"carpic\" style=\"display:none;\"><img id=\"carimg\" src=\"\" alt=\"Photo of Car\" style=\"max-width:300px;\"><p id=\"quantity-msg\" style=\"font-weight: bold;\"></p></div><script>\n\t\t// Function to set a cookie\n\t\tfunction setCookie(name, value, daysToLive) {\n\t\t\tlet cookie = name + \"=\" + encodeURIComponent(value);\n\t\t\tif (typeof daysToLive === \"number\") {\n\t\t\t\tcookie += \"; max-age=\" + (daysToLive * 24 * 60 * 60);\n\t\t\t}\n\t\t\tdocument.cookie = cookie;\n\t\t}\n\n\t\t// Function to get a cookie\n\t\tfunction getCookie(name) {\n\t\t\tlet cookieArr = document.cookie.split(\";\");\n\t\t\tfor (let i = 0; i < cookieArr.length; i++) {\n\t\t\t\tlet cookiePair = cookieArr[i].split(\"=\");\n\t\t\t\tif (name == cookiePair[0].trim()) {\n\t\t\t\t\treturn decodeURIComponent(cookiePair[1]);\n\t\t\t\t}\n\t\t\t}\n\t\t\treturn null;\n\t\t}\n\n\t\t// Track selected product\n\t\tdocument.getElementById(\"car\").addEventListener(\"change\", function () {\n\t\t\tconst selectedCar = this.options[this.selectedIndex].text; // Get the product name\n\t\t\tlet viewedProducts = getCookie(\"viewedProducts\");\n\t\t\tviewedProducts = viewedProducts ? JSON.parse(viewedProducts) : [];\n\t\t\t\n\t\t\t// Add the product to the viewed list if not already present\n\t\t\tif (!viewedProducts.includes(selectedCar)) {\n\t\t\t\tviewedProducts.push(selectedCar);\n\t\t\t\tsetCookie(\"viewedProducts\", JSON.stringify(viewedProducts), 7); // Store for 7 days\n\t\t\t}\n\t\t});\n\n\t\t// Reset cookies on page load\n\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\tsetCookie(\"viewedProducts\", JSON.stringify([]), 7);\n\n\t\t\tdocument.querySelector(\"form\").addEventListener(\"submit\", function() {\n\t\t\tconst timestampField = document.getElementById(\"timestamp\");\n\t\t\ttimestampField.value = Math.floor(Date.now() / 1000);\n    });\n\t\t});\n\n\t\t</script></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -135,21 +121,21 @@ func PurchaseConfirmation(purchaseInformation types.PurchaseInfo) templ.Componen
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var7 == nil {
-			templ_7745c5c3_Var7 = templ.NopComponent
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("<div><p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(purchaseInformation.Message)
+		var templ_7745c5c3_Var7 string
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(purchaseInformation.Message)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 76, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 122, Col: 34}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -157,12 +143,12 @@ func PurchaseConfirmation(purchaseInformation types.PurchaseInfo) templ.Componen
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", purchaseInformation.Quantity))
+		var templ_7745c5c3_Var8 string
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", purchaseInformation.Quantity))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 77, Col: 71}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 123, Col: 72}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -170,12 +156,12 @@ func PurchaseConfirmation(purchaseInformation types.PurchaseInfo) templ.Componen
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var10 string
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(purchaseInformation.Car)
+		var templ_7745c5c3_Var9 string
+		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(purchaseInformation.Car)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 77, Col: 99}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 123, Col: 100}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -183,12 +169,12 @@ func PurchaseConfirmation(purchaseInformation types.PurchaseInfo) templ.Componen
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", purchaseInformation.Price))
+		var templ_7745c5c3_Var10 string
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", purchaseInformation.Price))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 77, Col: 153}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 123, Col: 154}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -196,12 +182,12 @@ func PurchaseConfirmation(purchaseInformation types.PurchaseInfo) templ.Componen
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var12 string
-		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", purchaseInformation.Price*float64(purchaseInformation.Quantity)))
+		var templ_7745c5c3_Var11 string
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", purchaseInformation.Price*float64(purchaseInformation.Quantity)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 78, Col: 102}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 124, Col: 103}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -209,12 +195,12 @@ func PurchaseConfirmation(purchaseInformation types.PurchaseInfo) templ.Componen
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var13 string
-		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", purchaseInformation.Total))
+		var templ_7745c5c3_Var12 string
+		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", purchaseInformation.Total))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 79, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 125, Col: 81}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -222,16 +208,16 @@ func PurchaseConfirmation(purchaseInformation types.PurchaseInfo) templ.Componen
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var14 string
-		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", purchaseInformation.RoundUpTotal))
+		var templ_7745c5c3_Var13 string
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%.2f", purchaseInformation.RoundUpTotal))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 80, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `templates/store.templ`, Line: 126, Col: 81}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p></div>")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString("</p><div id=\"viewedInStore\" style=\"margin-top: 20px; color: #FFA500;\"><h3>Based on your viewing history, we'd like to offer 20% off and free car mats for these items:</h3><ul id=\"viewed-list\" style=\"color: #FFA500;\"></ul></div><script>\n\t\t\t// Purchased car information passed from the server\n\t\t\tconst purchasedCar = \"{purchaseInformation.Car} : ${parseFloat({purchaseInformation.Price}).toFixed(2)}\";\n\t\t\tconsole.log(\"Purchased Car:\", purchasedCar);\n\n\t\t\t// Function to get cookie\n\t\t\tfunction getCookie(name) {\n\t\t\t\tlet cookieArr = document.cookie.split(\";\");\n\t\t\t\tfor (let i = 0; i < cookieArr.length; i++) {\n\t\t\t\t\tlet cookiePair = cookieArr[i].split(\"=\");\n\t\t\t\t\tif (name === cookiePair[0].trim()) {\n\t\t\t\t\t\treturn decodeURIComponent(cookiePair[1]);\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\treturn null;\n\t\t\t}\n\n\t\t\t// Function to set a cookie\n\t\t\tfunction setCookie(name, value, daysToLive) {\n\t\t\t\tlet cookie = name + \"=\" + encodeURIComponent(value);\n\t\t\t\tif (typeof daysToLive === \"number\") {\n\t\t\t\t\tcookie += \"; max-age=\" + (daysToLive * 24 * 60 * 60);\n\t\t\t\t}\n\t\t\t\tdocument.cookie = cookie;\n\t\t\t}\n\n\t\t\tdocument.addEventListener(\"DOMContentLoaded\", function () {\n\t\t\t\tconst viewedProductsCookie = getCookie(\"viewedProducts\");\n\n\t\t\t\tif (viewedProductsCookie) {\n\t\t\t\t\tlet viewedProducts = JSON.parse(viewedProductsCookie);\n\t\t\t\t\tconsole.log(\"Viewed Products Before Filtering:\", viewedProducts);\n\n\t\t\t\t\tlet viewedList = document.getElementById(\"viewed-list\");\n\t\t\t\t\tviewedList.innerHTML = \"\"; // Clear the list\n\n\t\t\t\t\tlet filteredProducts = [];\n\t\t\t\t\tfor (let i = 0; i < viewedProducts.length; i++) {\n\t\t\t\t\t\tconsole.log(`Comparing: '${viewedProducts[i]}' with '${purchasedCar}'`);\n\t\t\t\t\t\tif (viewedProducts[i] !== purchasedCar) {\n\t\t\t\t\t\t\tfilteredProducts.push(viewedProducts[i]);\n\t\t\t\t\t\t\tlet listItem = document.createElement(\"li\");\n\t\t\t\t\t\t\tlistItem.textContent = viewedProducts[i];\n\t\t\t\t\t\t\tviewedList.appendChild(listItem);\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\n\t\t\t\t\tconsole.log(\"Filtered Products:\", filteredProducts);\n\n\t\t\t\t\t// Reset the cookie with only the filtered products\n\t\t\t\t\tsetCookie(\"viewedProducts\", JSON.stringify(filteredProducts), 7);\n\n\t\t\t\t\t// Show or hide the section based on filteredProducts length\n\t\t\t\t\tconst viewedInStoreSection = document.getElementById(\"viewedInStore\");\n\t\t\t\t\tif (filteredProducts.length === 0) {\n\t\t\t\t\t\tviewedInStoreSection.style.display = \"none\"; // Hide the entire section\n\t\t\t\t\t} else {\n\t\t\t\t\t\tviewedInStoreSection.style.display = \"block\"; // Ensure it's visible if items remain\n\t\t\t\t\t}\n\t\t\t\t} else {\n\t\t\t\t\t// Hide the section if no cookie exists\n\t\t\t\t\tdocument.getElementById(\"viewedInStore\").style.display = \"none\";\n\t\t\t\t}\n\t\t\t});\n\t\t</script></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
